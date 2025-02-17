@@ -1,7 +1,7 @@
 # 创建一种方言
 
-- [CMake 最佳实践](#CMake 最佳实践)
-  - [TablGen 目标](#TablGen 目标)
+- [CMake 最佳实践](#CMake%20最佳实践)
+  - [TablGen 目标](#TablGen%20目标)
   - [库目标](#库目标)
 
 - [CMake最佳实践](#CMake最佳实践)
@@ -14,11 +14,11 @@
 - mlir/lib/Dialect/Foo/Transforms （用于变换）
 - mlir/test/Dialect/Foo （用于测试）
 
-除其他公共头文件外，include目录还包含一个[ODS 格式](../Defining Dialects/Operation Definition Specification (ODS).md)的 TableGen 文件，用于描述方言中的操作。该文件用于生成操作声明（FooOps.h.inc）和定义（FooOps.cpp.inc），以及操作接口声明（FooOpsInterfaces.h.inc）和定义（FooOpsInterfaces.cpp.inc）。
+除其他公共头文件外，include目录还包含一个[ODS 格式](../Defining%20Dialects/Operation%20Definition%20Specification%20(ODS).md)的 TableGen 文件，用于描述方言中的操作。该文件用于生成操作声明（FooOps.h.inc）和定义（FooOps.cpp.inc），以及操作接口声明（FooOpsInterfaces.h.inc）和定义（FooOpsInterfaces.cpp.inc）。
 
 IR目录通常包含方言函数的实现，这些函数不是由 ODS 自动生成的。这些函数通常在 FooDialect.cpp 中定义，其中会引入 FooOps.cpp.inc 和 FooOpsInterfaces.h.inc。
 
-Transforms目录包含方言的重写规则，通常在使用[DDR 格式](../Table-driven Declarative Rewrite Rule(DRR).md)的 TableGen 文件中描述。
+Transforms目录包含方言的重写规则，通常在使用[DDR 格式](../Table-driven%20Declarative%20Rewrite%20Rule(DRR).md)的 TableGen 文件中描述。
 
 请注意，方言名称一般不应以 “Ops”为后缀，但某些仅与方言操作有关的文件（如 FooOps.cpp）可能会以 “Ops”为后缀。
 

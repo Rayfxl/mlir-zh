@@ -1,3 +1,5 @@
+TODO
+
 # 特征
 
 MLIR 允许一个真正开放的生态系统，因为任何方言都可以定义适合特定抽象级别的属性、操作和类型。`Traits` 是一种机制，它抽象了许多不同属性/操作/类型等共同的实现细节和特性。`Traits`可用于指定对象的特殊特性和约束，包括操作是否有副作用或其输出是否与输入具有相同的类型。操作特征的一些示例包括`Commutative`、`SingleResult`、`Terminator` 等。请参阅下面更全面的[操作特征](https://mlir.llvm.org/docs/Traits/#operation-traits-list)列表，了解更多可能的示例。

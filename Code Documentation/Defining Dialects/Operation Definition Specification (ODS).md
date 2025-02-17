@@ -2,7 +2,7 @@
 
 除了特化`mlir::Op`C++ 模板外，MLIR 还支持以表驱动的方式定义操作和数据类型。这是通过 TableGen 实现的，[TableGen](https://llvm.org/docs/TableGen/index.html) 既是一种通用语言，也是维护特定领域信息记录的工具。有关操作的事实可简明扼要地指定到 TableGen 记录中，在编译器构建时，该记录将扩展为等效的`mlir::Op`C++ 模板特化。
 
-本手册详细解释了以这种表驱动方式定义操作的所有可用机制。本手册旨在提供规范而非成为一个教程。后者请参阅[添加 MLIR 图重写的快速入门教程](../Tutorials/Quickstart tutorial to adding MLIR graph rewrite.md)。
+本手册详细解释了以这种表驱动方式定义操作的所有可用机制。本手册旨在提供规范而非成为一个教程。后者请参阅[添加 MLIR 图重写的快速入门教程](../Tutorials/Quickstart%20tutorial%20to%20adding%20MLIR%20graph%20rewrite.md)。
 
 除了详细介绍每种机制外，本手册还尝试确定最佳实践。它们以符号列表的形式呈现。
 
@@ -309,7 +309,7 @@ let successors = (successor
 
 特征是影响语法或语义的操作特性。MLIR C++ 在`mlir::OpTrait`命名空间中建立了各种特征模型。
 
-涉及多个操作数/属性/结果的操作特征、[接口](../Interfaces.md#利用 ODS 框架)和约束都作为 `Op` 类的第三个模板参数提供。它们应从 `OpTrait` 类派生。有关更多信息，请参阅[约束](#约束)。
+涉及多个操作数/属性/结果的操作特征、[接口](../Interfaces.md#利用%20ODS%20框架)和约束都作为 `Op` 类的第三个模板参数提供。它们应从 `OpTrait` 类派生。有关更多信息，请参阅[约束](#约束)。
 
 ### 构建方法
 
@@ -532,7 +532,7 @@ def CallOp : Std_Op<"call", ...> {
   - 表示用户用 C++ 实现的自定义指令。
   - 详见下面的 [Custom Directives](#自定义指令) 部分。
 - `functional-type ( inputs , outputs )`
-  - 将 `inputs` 和 `outputs` 参数格式化为[函数类型](../Dialects/Builtin Dialect.md#FunctionType)。
+  - 将 `inputs` 和 `outputs` 参数格式化为[函数类型](../Dialects/Builtin%20Dialect.md#FunctionType)。
   - `inputs` 和 `outputs` 的约束与 `type` 指令的 `input` 相同。
 - ``oilist ( `keyword` elements | `otherKeyword` elements ...)``
   - 表示与顺序无关的可选子句列表。每个子句都有一个关键字和相应的装配格式。
@@ -698,7 +698,7 @@ def ReturnOp : ... {
 
 ##### 单位属性
 
-在 MLIR 中，[`unit` 属性](../Dialects/Builtin Dialect.md#UnitAttr)比较特殊，因为它只有一个可能的值，即它从其存在中获得意义。当单位属性被用来锚定一个可选组，并且不是该组的第一个元素时，单位属性的存在就可以直接与可选组本身的存在相关联。因此，在这些情况下，单位属性不会被打印输出或出现在输出中，并且将在解析时根据可选组本身的存在自动推断出来。
+在 MLIR 中，[`unit` 属性](../Dialects/Builtin%20Dialect.md#UnitAttr)比较特殊，因为它只有一个可能的值，即它从其存在中获得意义。当单位属性被用来锚定一个可选组，并且不是该组的第一个元素时，单位属性的存在就可以直接与可选组本身的存在相关联。因此，在这些情况下，单位属性不会被打印输出或出现在输出中，并且将在解析时根据可选组本身的存在自动推断出来。
 
 例如，下面的操作：
 
@@ -1020,8 +1020,8 @@ ODS 属性被定义为具有一种存储类型（对应于背后的 `mlir::Attri
 
 有些属性只能从预定义的枚举中取值，例如比较操作的比较类型。为了定义这类属性，ODS 提供了几种机制：`IntEnumAttr` 和 `BitEnumAttr`。
 
-- `IntEnumAttr`: 每个枚举项都是一个整数，属性以 [`IntegerAttr`](../Dialects/Builtin Dialect.md#IntegerType)的形式存储在操作中。
-- `BitEnumAttr`:每个枚举项都是空项、单个比特或一组单个比特，属性以 [`IntegerAttr`](../Dialects/Builtin Dialect.md#IntegerType) 的形式存储在操作中。
+- `IntEnumAttr`: 每个枚举项都是一个整数，属性以 [`IntegerAttr`](../Dialects/Builtin%20Dialect.md#IntegerType)的形式存储在操作中。
+- `BitEnumAttr`:每个枚举项都是空项、单个比特或一组单个比特，属性以 [`IntegerAttr`](../Dialects/Builtin%20Dialect.md#IntegerType) 的形式存储在操作中。
 
 所有这些 `*EnumAttr` 属性都需要通过相应的 `*EnumAttrCase` 来完全指定所有允许的情况。这样，ODS 就能生成额外的验证，只接受允许的情况。为了促进 `*EnumAttr`s 与其 C++ 使用者之间的交互，[`EnumsGen`](https://github.com/llvm/llvm-project/blob/main/mlir/tools/mlir-tblgen/EnumsGen.cpp) TableGen 后端可以生成一些常用工具：C++ 枚举类、用于枚举类的 `llvm::DenseMapInfo` 以及字符串之间的转换函数。这可以通过 `mlir-tblgen` 的 `-gen-enum-decls` 和 `-gen-enum-defs` 命令行选项来控制。
 
@@ -1319,7 +1319,7 @@ def MyOp : Op<MyDialect, "my.op">, CppDeprecated<"use 'your.op' instead">;
 
 - 操作的特征（如可交换）与注册表中的操作一起建模。
 
-- 操作的操作数/返回类型约束与注册表中的操作一起建模（见下文[形状推断](../Shape Inference.md)讨论），这允许（例如）在文本转储中优化简洁的语法。
+- 操作的操作数/返回类型约束与注册表中的操作一起建模（见下文[形状推断](../Shape%20Inference.md)讨论），这允许（例如）在文本转储中优化简洁的语法。
 
 - 操作的行为与带有摘要和描述的操作一起记录下来。描述用 markdown 写成，并且会被提取出来，以便包含在生成的方言的语言参考部分中。
 

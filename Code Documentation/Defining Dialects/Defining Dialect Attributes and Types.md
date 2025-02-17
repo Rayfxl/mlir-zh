@@ -1,6 +1,6 @@
 # 定义方言中的属性和类型
 
-本文档介绍如何定义方言中的[属性](../MLIR Language Reference.md#属性)和[类型](../MLIR Language Reference.md#类型系统)。
+本文档介绍如何定义方言中的[属性](../MLIR%20Language%20Reference.md#属性)和[类型](../MLIR%20Language%20Reference.md#类型系统)。
 
 - [语言参考回顾](#语言参考回顾)
   - [属性](#属性)
@@ -24,21 +24,21 @@
 
 ## 语言参考回顾
 
-在深入研究如何定义这些结构之前，先来快速回顾一下[MLIR语言参考](../MLIR Language Reference.md)。
+在深入研究如何定义这些结构之前，先来快速回顾一下[MLIR语言参考](../MLIR%20Language%20Reference.md)。
 
 ### 属性
 
-属性是一种机制，用于在不允许使用变量的地方为操作指定常量数据，例如[`arith.cmpi` 操作](../Dialects/'arith' Dialect.md#`arith.cmpi` (arith::CmpIOp))的比较谓词，或 [`arith.constant` 操作](../Dialects/'arith' Dialect.md#`arith.constant` (arith::ConstantOp))的底层值。每个操作都有一个属性字典，该字典将一组属性名称与属性值关联起来。
+属性是一种机制，用于在不允许使用变量的地方为操作指定常量数据，例如[`arith.cmpi` 操作](../Dialects/'arith'%20Dialect.md#`arith.cmpi`%20(arith::CmpIOp))的比较谓词，或 [`arith.constant` 操作](../Dialects/'arith'%20Dialect.md#`arith.constant`%20(arith::ConstantOp))的底层值。每个操作都有一个属性字典，该字典将一组属性名称与属性值关联起来。
 
 ### 类型
 
-MLIR 中的每个 SSA 值（如操作结果或块参数）都有一个由类型系统定义的类型。MLIR 有一个开放的类型系统，没有固定的类型列表，对它们所代表的抽象也没有限制。例如，请看下面的 [Arithmetic AddI 操作](../Dialects/'arith' Dialect.md##`arith.addi` (arith::AddIOp))：
+MLIR 中的每个 SSA 值（如操作结果或块参数）都有一个由类型系统定义的类型。MLIR 有一个开放的类型系统，没有固定的类型列表，对它们所代表的抽象也没有限制。例如，请看下面的 [Arithmetic AddI 操作](../Dialects/'arith'%20Dialect.md##`arith.addi`%20(arith::AddIOp))：
 
 ```mlir
   %result = arith.addi %lhs, %rhs : i64
 ```
 
-它接收两个输入 SSA 值（`%lhs` 和 `%rhs`），并返回一个 SSA 值（`%result`）。此操作的输入和输出都是 `i64`类型，它是[内置整数类型](../Dialects/Builtin Dialect.md#IntegerType)的一个实例。
+它接收两个输入 SSA 值（`%lhs` 和 `%rhs`），并返回一个 SSA 值（`%result`）。此操作的输入和输出都是 `i64`类型，它是[内置整数类型](../Dialects/Builtin%20Dialect.md#IntegerType)的一个实例。
 
 ## 属性和类型
 
@@ -635,7 +635,7 @@ def OuterQualifiedType : TypeDef<My_Dialect, "MyOuterQualifiedType"> {
 
 ##### `struct` 指令
 
-`struct` 指令接受要捕获的变量列表，并为逗号分隔的键值对列表生成解析器和打印输出器。如果 `struct` 中包含可选参数，则可以省略该参数。变量将按参数列表中指定的顺序打印**，但可以按任何顺序解析**。例如：
+`struct` 指令接受要捕获的变量列表，并为逗号分隔的键值对列表生成解析器和打印输出器。如果 `struct` 中包含可选参数，则可以省略该参数。变量将按参数列表中指定的顺序打印，**但可以按任何顺序解析**。例如：
 
 ```tablegen
 def MyStructType : TypeDef<My_Dialect, "MyStructType"> {

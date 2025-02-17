@@ -1,6 +1,6 @@
 # 定义方言
 
-本文档介绍了如何定义[方言](../MLIR Language Reference.md#方言)。
+本文档介绍了如何定义[方言](../MLIR%20Language%20Reference.md#方言)。
 
 - [语言参考回顾](#语言参考回顾)
 - [定义一种方言](#定义一种方言)
@@ -22,9 +22,9 @@
 
 ## 语言参考回顾
 
-在深入研究如何定义这些结构之前，先来快速回顾一下[MLIR语言参考](../MLIR Language Reference.md)。
+在深入研究如何定义这些结构之前，先来快速回顾一下[MLIR语言参考](../MLIR%20Language%20Reference.md)。
 
-方言是参与和扩展MLIR生态的机制，这允许用户定义新的[属性](../MLIR Language Reference.md#属性)、[操作](../MLIR Language Reference.md#操作)和[类型](../MLIR Language Reference.md#类型系统)。方言用于对各种不同的抽象进行建模，从传统的[算术运算](../Dialects/'arith' Dialect.md)到[模式重写](../Dialects/'pdl' Dialect.md)皆是如此，这是MLIR的基本面之一。
+方言是参与和扩展MLIR生态的机制，这允许用户定义新的[属性](../MLIR%20Language%20Reference.md#属性)、[操作](../MLIR%20Language%20Reference.md#操作)和[类型](../MLIR%20Language%20Reference.md#类型系统)。方言用于对各种不同的抽象进行建模，从传统的[算术运算](../Dialects/'arith'%20Dialect.md)到[模式重写](../Dialects/'pdl'%20Dialect.md)皆是如此，这是MLIR的基本面之一。
 
 ## 定义一种方言
 
@@ -121,7 +121,7 @@ def MyDialect : Dialect {
 
 ### `hasConstantMaterializer`：从属性具体化常量
 
-此字段用于实现`Attribute`值和`Type`的常量操作。当方言中的一个操作被折叠，并且应生成一个constant操作时，通常使用此方法。`hasConstantMaterializer`用于启用具体化，并且`materializeConstant`钩子是在方言层面声明的。此钩子接受一个 `Attribute` 值（通常由`fold`返回），并生成一个“类常量”操作，将该值具体化。有关 MLIR 中` folding `的更深入介绍，请参阅[规范化文档](../Operation Canonicalization.md)。
+此字段用于实现`Attribute`值和`Type`的常量操作。当方言中的一个操作被折叠，并且应生成一个constant操作时，通常使用此方法。`hasConstantMaterializer`用于启用具体化，并且`materializeConstant`钩子是在方言层面声明的。此钩子接受一个 `Attribute` 值（通常由`fold`返回），并生成一个“类常量”操作，将该值具体化。有关 MLIR 中` folding `的更深入介绍，请参阅[规范化文档](../Operation%20Canonicalization.md)。
 
 声明之后，可以在源文件中定义常量具体化的逻辑：
 
@@ -141,7 +141,7 @@ Operation *MyDialect::materializeConstant(OpBuilder &builder, Attribute value,
 
 ### 可丢弃属性验证
 
-如 [MLIR 语言参考](../MLIR Language Reference.md#属性)中所述，*可丢弃属性*是一种属性类型，其语义由方言定义，方言的名称位于属性的前缀之前。例如，如果某个操作具有名为`gpu.contained_module`的属性，则`gpu`方言会定义该属性的语义和不变量，例如有效使用该属性的时机和场合。要对以方言为前缀的这些属性进行钩子验证，可以使用方言层面的几个钩子：
+如 [MLIR 语言参考](../MLIR%20Language%20Reference.md#属性)中所述，*可丢弃属性*是一种属性类型，其语义由方言定义，方言的名称位于属性的前缀之前。例如，如果某个操作具有名为`gpu.contained_module`的属性，则`gpu`方言会定义该属性的语义和不变量，例如有效使用该属性的时机和场合。要对以方言为前缀的这些属性进行钩子验证，可以使用方言层面的几个钩子：
 
 #### **`hasOperationAttrVerify`** 
 
@@ -191,14 +191,14 @@ void *MyDialect::getRegisteredInterfaceForOp(TypeID typeID, StringAttr opName);
 
 ### 方言级别的规范化模式
 
-一般来说，[规范化](../Operation Canonicalization.md)模式是针对方言中的单个操作的。但在某些情况下，规范化模式会被添加到方言级别。例如，如果方言定义的规范化模式应用于接口或特征，那么只需添加一次该模式就可以了，而不必为实现该接口的每个操作重复添加。要生成这个钩子，可以使用`hasCanonicalizer`字段。这将在方言层面声明`getCanonicalizationPatterns`方法，其形式如下：
+一般来说，[规范化](../Operation%20Canonicalization.md)模式是针对方言中的单个操作的。但在某些情况下，规范化模式会被添加到方言级别。例如，如果方言定义的规范化模式应用于接口或特征，那么只需添加一次该模式就可以了，而不必为实现该接口的每个操作重复添加。要生成这个钩子，可以使用`hasCanonicalizer`字段。这将在方言层面声明`getCanonicalizationPatterns`方法，其形式如下：
 
 ```
 /// 返回此方言的规范化模式
 void MyDialect::getCanonicalizationPatterns(RewritePatternSet &results) const;
 ```
 
-有关规范化模式的更详细说明，请参阅[MLIR 中的规范化](../Operation Canonicalization.md)文档。
+有关规范化模式的更详细说明，请参阅[MLIR 中的规范化](../Operation%20Canonicalization.md)文档。
 
 ### **为方言属性和类型定义字节码格式**
 
