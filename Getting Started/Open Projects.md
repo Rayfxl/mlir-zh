@@ -13,7 +13,7 @@
 - Polyhedral scheduling in MLIR (mentor: Alex Zinenko)
 - MLIR visualization (mentor: Jacques Pienaar)
 - MLIR sparsifier (aka sparse compiler) [starter tasks](https://github.com/llvm/llvm-project/labels/mlir%3Asparse) (mentor: Aart Bik)
-- MLIR 允许在同一个 IR/函数中同时表示多个抽象层次。因此，可视化 MLIR 模块不能仅仅停留在可视化同一层次的节点图（这本身已经是一个复杂的任务），而且这种需求也不局限于机器学习领域。除了 MLIR 模块的可视化，MLIR 本身的可视化也很重要。尤其是重写规则的可视化、匹配过程的可视化（包括匹配失败的情况，类似于 https://www.debuggex.com/，但针对的是声明式重写）、随着时间推移的重写效果的可视化等。所有的可视化都应使用开源组件构建，但是否采用独立工具（例如，与 GraphViz 结合生成离线图像）或动态工具（例如，在浏览器中显示），则有待讨论。无论如何，它都应该能够完全离线使用。鉴于潜在方法的范围很广，我们将与感兴趣的学生合作，根据他们的兴趣细化具体的项目内容，并且对这一领域的相关提案持开放态度。
+- MLIR 允许在同一个 IR/函数中同时表示多个抽象层次。因此，可视化 MLIR 模块不能仅仅停留在可视化同一层次的节点图（这本身已经是一个复杂的任务），而且这种需求也不局限于机器学习领域。除了 MLIR 模块的可视化，MLIR 本身的可视化也很重要。尤其是重写规则的可视化、匹配过程的可视化（包括匹配失败的情况，类似于https://www.debuggex.com/，但针对的是声明式重写）、随着时间推移的重写效果的可视化等。所有的可视化都应使用开源组件构建，但是否采用独立工具（例如，与GraphViz结合生成离线图像）或动态工具（例如，在浏览器中显示），则有待讨论。无论如何，它都应该能够完全离线使用。鉴于潜在方法的范围很广，我们将与感兴趣的学生合作，根据他们的兴趣细化具体的项目内容，并且对这一领域的相关提案持开放态度。
 - Rewrite patterns expressed in MLIR (mentor: Jacques Pienaar)
 - Generic value range analysis for MLIR (mentor: River Riddle)
 

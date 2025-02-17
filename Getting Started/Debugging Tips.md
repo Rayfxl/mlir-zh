@@ -19,7 +19,7 @@
 
 ### 提取`.mlir`文件和pass管道。
 
-MLIR 的核心基础设施具有[创建“崩溃重现器”](../Code%20documentation/Pass%20Infrastructure.md)的功能，应将此功能添加到编译流程中。此外，您应确保在编译流程的关键点上转储`.mlir`文件，这样即使编译成功（可能是虚假的，如错误编译），也仍有一个起点可以转入`mlir-opt`。
+MLIR 的核心基础设施具有[创建“崩溃重现器”](../Code%20Documentation/Pass%20Infrastructure.md)的功能，应将此功能添加到编译流程中。此外，您应确保在编译流程的关键点上转储`.mlir`文件，这样即使编译成功（可能是虚假的，如错误编译），也仍有一个起点可以转入`mlir-opt`。
 
 ### 隔离出错的pass
 

@@ -1,22 +1,22 @@
 # 测试指南
 
 - [快速启动命令](#快速启动命令)
-  - [运行所有 MLIR 测试：](#运行所有 MLIR 测试)
+  - [运行所有 MLIR 测试：](#运行所有%20MLIR%20测试)
   - [运行集成测试（要求`-DMLIR_INCLUDE_INTEGRATION_TESTS=ON`）：](#运行集成测试（要求`-DMLIR_INCLUDE_INTEGRATION_TESTS=ON`）：)
-  - [运行 C++ 单元测试：](#运行 C++ 单元测试：)
+  - [运行 C++ 单元测试：](#运行%20C++%20单元测试：)
   - [在特定目录下运行`lit`测试](#在特定目录下运行`lit`测试)
   - [运行特定的`lit`测试文件](#运行特定的`lit`测试文件)
 - [测试类别](#测试类别)
   - [`lit`和`FileCheck`测试](#`lit`和`FileCheck`测试)
   - [诊断测试](#诊断测试)
   - [集成测试](#集成测试)
-  - [C++ 单元测试](#C++ 单元测试)
+  - [C++ 单元测试](#C++%20单元测试)
 - [贡献者指南](#贡献者指南)
-  - [FileCheck 最佳实践](#FileCheck 最佳实践)
+  - [FileCheck 最佳实践](#FileCheck%20最佳实践)
 
 ## 快速启动命令
 
-下面将详细解释这些命令。所有命令都在[构建项目](Getting Started.md)后从 cmake 构建目录`build/`中运行。
+下面将详细解释这些命令。所有命令都在[构建项目](Getting%20Started.md)后从 cmake 构建目录`build/`中运行。
 
 ### 运行所有 MLIR 测试：
 
@@ -159,7 +159,7 @@ MLIR 提供了丰富的源代码位置跟踪功能，可用于在整个代码库
 - 检查分析的预期结果
 - 检测格式不正确的IR
 
-诊断验证测试是利用[源管理器诊断处理器](../Code Documentation/Diagnostic Infrastructure.md#源管理器诊断处理器)编写的，可通过 `mlir-opt` 中的 `verify-diagnostics` 标志启用。
+诊断验证测试是利用[源管理器诊断处理器](../Code%20Documentation/Diagnostic%20Infrastructure.md#源管理器诊断处理器)编写的，可通过 `mlir-opt` 中的 `verify-diagnostics` 标志启用。
 
 在 `mlir-opt` 下运行的 .mlir 测试示例如下：
 
@@ -185,7 +185,7 @@ func.func @foo(%a : f32) {
 
 集成测试是 `FileCheck` 测试，通过运行它来验证 MLIR 代码的功能正确性，通常通过使用 `mlir-cpu-runner` 和运行时支持库进行JIT编译来实现。
 
-集成测试默认不运行。要启用它们，请在 `cmake` 配置过程中设置`-DMLIR_INCLUDE_INTEGRATION_TESTS=ON`标志，具体操作请参阅[入门指南](Getting Started.md)。
+集成测试默认不运行。要启用它们，请在 `cmake` 配置过程中设置`-DMLIR_INCLUDE_INTEGRATION_TESTS=ON`标志，具体操作请参阅[入门指南](Getting%20Started.md)。
 
 ```sh
 cmake -G Ninja ../llvm \
