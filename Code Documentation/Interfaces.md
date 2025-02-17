@@ -1,6 +1,10 @@
 # 接口
 
-MLIR 是一个通用且可扩展的框架，能表示不同的方言，它们有各自的属性、操作、类型等。MLIR 方言可以表达各种语义和不同抽象层次的操作。这样做的弊端是，MLIR 变换和分析需要考虑到每种操作的语义，否则就会过于保守。如果不加注意，就会导致代码对每种支持的操作类型都有特例。为了解决这个问题，MLIR 提供了一个`接口`的概念。
+MLIR 是一个通用且可扩展的框架，能表示不同的方言，它们有各自的属性、操作、类型等。MLIR 方言可以表达各种语义和不同抽象层次的操作。这样做的弊端是，MLIR 变换和分析需要考虑到每种操作的语义，否则就会过于保守。如果不加注意，就会导致代码对每种支持的操作类型都有特例。为了解决这个问题，MLIR 提供了一个 `interfaces`的概念。
+
+- [动机](#动机)
+  - [方言接口](#方言接口)
+  - [属性/操作/类型接口](#属性/操作/类型接口)
 
 ## 动机
 
@@ -13,30 +17,30 @@ MLIR 是一个通用且可扩展的框架，能表示不同的方言，它们有
 方言接口可通过继承[CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)基类 `DialectInterfaceBase：：Base<>` 来定义。该类提供了将接口注册到方言中的必要实用工具，以便以后可以引用。一旦定义了接口，方言就可以使用特定方言的信息来重写它。方言定义的接口通过 `addInterfaces<>` 注册，这种机制与属性、操作、类型等类似。
 
 ```c++
-// 定义一个内联接口基类，允许不同的方言选择性地加入到内联器中。
+/// 定义一个内联接口基类，允许不同的方言选择性地加入到内联器中。
 class DialectInlinerInterface :
     public DialectInterface::Base<DialectInlinerInterface> {
 public:
-  // 如果给定的区域'src'可以内联到区域'dest'中，则返回 true，
-  // 其中'dest'区域附加在一个注册到当前方言的操作上。
-  // valueMapping'包含'src'区域内的任何重新映射的值。
-  // 例如，这可以用来检查哪些值将取代进入 “src ”区域的入口参数。
+  /// 如果给定的区域'src'可以内联到区域'dest'中，则返回 true，
+  /// 其中'dest'区域附加在一个注册到当前方言的操作上。
+  /// valueMapping'包含'src'区域内的任何重新映射的值。
+  /// 例如，这可以用来检查哪些值将取代进入 “src ”区域的入口参数。
   virtual bool isLegalToInline(Region *dest, Region *src,
                                IRMapping &valueMapping) const {
     return false;
   }
 };
 
-// 重写内联接口，为 AffineDialect 添加支持，以启用内联仿射操作。
+/// 重写内联接口，为 AffineDialect 添加支持，以启用内联仿射操作。
 struct AffineInlinerInterface : public DialectInlinerInterface {
-  // Affine 结构有特定的内联限制。
+  /// Affine 结构有特定的内联限制。
   bool isLegalToInline(Region *dest, Region *src,
                        IRMapping &valueMapping) const final {
     ...
   }
 };
 
-// 使用方言注册接口。
+/// 使用方言注册接口。
 AffineDialect::AffineDialect(MLIRContext *context) ... {
   addInterfaces<AffineInlinerInterface>();
 }
@@ -47,7 +51,7 @@ AffineDialect::AffineDialect(MLIRContext *context) ... {
 ```c++
 Dialect *dialect = ...;
 if (DialectInlinerInterface *interface = dyn_cast<DialectInlinerInterface>(dialect)) {
-  // 方言提供了该接口的实现。
+  // The dialect has provided an implementation of this interface.
   ...
 }
 ```
@@ -59,7 +63,7 @@ if (DialectInlinerInterface *interface = dyn_cast<DialectInlinerInterface>(diale
 ```c++
 class InlinerInterface : public
     DialectInterfaceCollection<DialectInlinerInterface> {
-  // 该类的钩子对应于DialectInlinerInterface的钩子，默认实现是调用给定方言接口的钩子。
+  /// 该类的钩子对应于DialectInlinerInterface的钩子，默认实现是调用给定方言接口的钩子。
   virtual bool isLegalToInline(Region *dest, Region *src,
                                IRMapping &valueMapping) const {
     auto *handler = getInterfaceFor(dest->getContainingOp());
@@ -77,45 +81,45 @@ if(!interface.isLegalToInline(...))
 
 属性/操作/类型接口，顾名思义，是在特定属性/操作/类型层面注册的接口。这些接口通过提供一个必须实现的虚拟接口来提供对派生对象的访问。例如，许多分析和变换都希望推断出操作是否有副作用，以提高性能和正确性。操作的副作用通常与特定操作的语义相关，例如，`affine.load` 操作具有`read`的作用（顾名思义）。
 
-这些接口是通过重写特定 IR 实体的 [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)类来定义的，分别是`AttrInterface`、`OpInterface`或`TypeInterface`。这些类的模板参数是`Traits`类，该类定义了一个`Concept`类和一个`Model`类。这些类提供了基于概念的多态性的实现，其中的 `Concept` 定义了一组虚方法，这些方法被在具体实体类型上模板化的 `Model` 重写。值得注意的是，这些类应该是纯的，不应包含非静态数据成员或其他可变数据。为了将接口附加到对象上，接口基类提供了一个 [`Trait`](https://mlir.llvm.org/docs/Traits/) 类，该类可以附加到该对象的特征列表中。
+这些接口是通过重写特定 IR 实体的 [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)类来定义的，分别是`AttrInterface`、`OpInterface`或`TypeInterface`。这些类的模板参数是`Traits`类，该类定义了一个`Concept`类和一个`Model`类。这些类提供了基于概念的多态性的实现，其中的 `Concept` 定义了一组虚方法，这些方法被在具体实体类型上模板化的 `Model` 重写。值得注意的是，这些类应该是纯的，不应包含非静态数据成员或其他可变数据。为了将接口附加到对象上，接口基类提供了一个 [`Trait`](Traits/Traits.md) 类，该类可以附加到该对象的特征列表中。
 
 ```c++
 struct ExampleOpInterfaceTraits {
-  // 定义一个概念基类，指定要实现的虚接口。
+  /// 定义一个概念基类，指定要实现的虚接口。
   struct Concept {
     virtual ~Concept();
 
-    // 这是一个操作的非静态钩子的例子。
+    /// 这是一个操作的非静态钩子的例子。
     virtual unsigned exampleInterfaceHook(Operation *op) const = 0;
 
-    // 这是一个操作的静态钩子的例子。静态钩子不需要具体的操作实例。
-    // 其实现是一个虚拟钩子，与非静态情况相同，因为钩子本身的实现仍然需要通过某种间接机制。
+    /// 这是一个操作的静态钩子的例子。静态钩子不需要具体的操作实例。
+    /// 其实现是一个虚拟钩子，与非静态情况相同，因为钩子本身的实现仍然需要通过某种间接机制。
     virtual unsigned exampleStaticInterfaceHook() const = 0;
   };
 
-  // 定义一个模型类，在给定的操作类型上特化一个概念。 
+  /// 定义一个模型类，在给定的操作类型上特化一个概念。 
   template <typename ConcreteOp>
   struct Model : public Concept {
-    // 重写具体操作的调度方法。
+    /// 重写具体操作的调度方法。
     unsigned exampleInterfaceHook(Operation *op) const final {
       return llvm::cast<ConcreteOp>(op).exampleInterfaceHook();
     }
 
-    // 重写静态方法来调度到具体操作类型。
+    /// 重写静态方法来调度到具体操作类型。
     unsigned exampleStaticInterfaceHook() const final {
       return ConcreteOp::exampleStaticInterfaceHook();
     }
   };
 };
 
-// 定义主接口类，分析和变换将与之交互。
+/// 定义主接口类，分析和变换将与之交互。
 class ExampleOpInterface : public OpInterface<ExampleOpInterface,
                                               ExampleOpInterfaceTraits> {
 public:
-  // 继承基类构造函数以支持 LLVM 风格的转换。
+  /// 继承基类构造函数以支持 LLVM 风格的转换。
   using OpInterface<ExampleOpInterface, ExampleOpInterfaceTraits>::OpInterface;
 
-  // 接口调度到 “getImpl()”，这是一个由“OpInterface”基类提供的方法，它返回概念的一个实例。
+  /// 接口调度到 “getImpl()”，这是一个由“OpInterface”基类提供的方法，它返回概念的一个实例。
   unsigned exampleInterfaceHook() const {
     return getImpl()->exampleInterfaceHook(getOperation());
   }
@@ -128,15 +132,15 @@ public:
 定义接口后，如前所述，可通过添加所提供的特征 `ExampleOpInterface::Trait` 将其注册到操作中。使用该接口就像使用任何其他派生操作类型一样，即进行转换：
 
 ```c++
-// 在定义操作时，接口是通过 “OpInterface<>”基类提供的嵌套 “Trait ”类注册的。
+/// 在定义操作时，接口是通过 “OpInterface<>”基类提供的嵌套 “Trait ”类注册的。
 class MyOp : public Op<MyOp, ExampleOpInterface::Trait> {
 public:
-  // 在派生操作上的接口方法的定义。
+  /// 在派生操作上的接口方法的定义。
   unsigned exampleInterfaceHook() { return ...; }
   static unsigned exampleStaticInterfaceHook() { return ...; }
 };
 
-// 之后，我们可以查询特定操作（如 “MyOp”）是否重写了给定接口。
+/// 之后，我们可以查询特定操作（如 “MyOp”）是否重写了给定接口。
 Operation *op = ...;
 if (ExampleOpInterface example = dyn_cast<ExampleOpInterface>(op))
   llvm::errs() << "hook returned = " << example.exampleInterfaceHook() << "\n";
@@ -158,9 +162,9 @@ struct ExampleTypeInterfaceTraits {
   template <typename ConcreteType>
   struct Model : public Concept { /*...*/ };
 
-  // 与 `Model` 不同的是，`FallbackModel` 将类型对象传递给钩子。
-  // 即使方法本身没有在类中定义，因而没有 `this` 访问权限，也可以在方法体中访问类型对象。
-  // ODS 会自动为所有接口生成该类。
+  /// 与 `Model` 不同的是，`FallbackModel` 将类型对象传递给钩子。
+  /// 即使方法本身没有在类中定义，因而没有 `this` 访问权限，也可以在方法体中访问类型对象。
+  /// ODS 会自动为所有接口生成该类。
   template <typename ConcreteType>
   struct FallbackModel : public Concept {
     unsigned exampleInterfaceHook(Type type) const override {
@@ -171,11 +175,11 @@ struct ExampleTypeInterfaceTraits {
     }
   };
 
-  // `ExternalModel`通过将实现接口的模型类与接口被实现的类型类明确分开，为接口方法的默认实现提供了位置。
-  // 可以使用 `cast<ConcreteType>` 来通用地定义默认实现。
-  // 如果`ConcreteType`未提供默认实现所需的API，自定义实现可直接使用`FallbackModel`来重写默认实现。
-  // `ExternalModel`位于类模板中，因此不会被实例化，也不会导致编译错误。
-  // ODS 会自动生成该类，并在其中放置默认方法实现。
+  /// `ExternalModel`通过将实现接口的模型类与接口被实现的类型类明确分开，为接口方法的默认实现提供了位置。
+  /// 可以使用 `cast<ConcreteType>` 来通用地定义默认实现。
+  /// 如果`ConcreteType`未提供默认实现所需的API，自定义实现可直接使用`FallbackModel`来重写默认实现。
+  /// `ExternalModel`位于类模板中，因此不会被实例化，也不会导致编译错误。
+  /// ODS 会自动生成该类，并在其中放置默认方法实现。
   template <typename ConcreteModel, typename ConcreteType>
   struct ExternalModel : public FallbackModel<ConcreteModel> {
     unsigned exampleInterfaceHook(Type type) const override {
@@ -189,7 +193,7 @@ struct ExampleTypeInterfaceTraits {
 通过派生 `FallbackModel` 或 `ExternalModel` ，并在给定上下文向相关类注册模型类，可以为属性、操作和类型接口提供外部模型。除非已注册，否则其他上下文将看不到该接口。
 
 ```c++
-// 具体类的外部接口实现。这不需要修改类型类本身的定义。
+/// 具体类的外部接口实现。这不需要修改类型类本身的定义。
 struct ExternalModelExample
     : public ExampleTypeInterface::ExternalModel<ExternalModelExample,
                                                  IntegerType> {
@@ -198,7 +202,8 @@ struct ExternalModelExample
     return IntegerType::someStaticMethod();
   }
 
-  // 不需要定义`exampleInterfaceHook`，它在`ExternalModel`中有默认实现。但如果需要，可以重写它。
+  // 不需要定义`exampleInterfaceHook`，它在`ExternalModel`中有默认实现。
+  // 但如果需要，可以重写它。
 }
 
 int main() {
@@ -263,9 +268,9 @@ void *TestDialect::getRegisteredInterfaceForOp(TypeID typeID,
 
 #### 利用 ODS 框架
 
-注意：在阅读本节之前，读者应该对[操作定义规范](https://mlir.llvm.org/docs/DefiningDialects/Operations/)文档中描述的概念有一定的了解。
+注意：在阅读本节之前，读者应该对[`操作定义规范`](https://mlir.llvm.org/docs/DefiningDialects/Operations/)文档中描述的概念有一定的了解。
 
-如上所述，[接口](https://mlir.llvm.org/docs/Interfaces/#attributeoperationtype-interfaces)允许属性、操作和类型对外暴露方法调用，而不要求调用者知道具体的派生类型。这种基础架构的缺点是，它需要一些样板代码来将所有部分连接在一起。MLIR 提供了一种机制，可以在 ODS 中声明式地定义接口，并自动生成 C++ 定义。
+如上所述，[接口](#属性/操作/类型接口)允许属性、操作和类型对外暴露方法调用，而不要求调用者知道具体的派生类型。这种基础架构的缺点是，它需要一些样板代码来将所有部分连接在一起。MLIR 提供了一种机制，可以在 ODS 中声明式地定义接口，并自动生成 C++ 定义。
 
 举例来说，使用 ODS 框架可以将上述示例接口定义为：
 
@@ -293,44 +298,37 @@ def ExampleOpInterface : OpInterface<"ExampleOpInterface"> {
 - C++ 类名（通过模板参数提供）
 
   - C++ 接口类的名称。
-
 - 接口基类
 
-  - 接口类应从其中派生的一组接口。详见下面的[接口继承](https://mlir.llvm.org/docs/Interfaces/#interface-inheritance)。
-
+  - 接口类应从其中派生的一组接口。详见下面的[接口继承](#接口继承)。
 - 描述(`description`)
 
   - 关于接口、其不变量、使用示例等的字符串描述。
-
 - C++命名空间(`cppNamespace`)
 
   - 应在其中生成接口类的 C++ 命名空间。
-
 - 方法(`methods`)
 
   - IR 对象定义的接口钩子方法的列表。
   - 这些方法的结构定义见下文。
-
 - 额外类声明(可选:`extraClassDeclaration`)
 
   - 接口类声明中生成的额外C++代码。这允许在面向用户的接口类上定义方法和更多内容，这些方法不需要挂接到IR实体上。这些声明在接口方法的默认实现中隐式不可见，但可以使用全名限定来访问静态声明。
-
 - 额外共享类声明(可选:`extraSharedClassDeclaration`)
 
   - 注入接口和特征类声明的额外 C++ 代码。这允许定义在接口和特征类中都暴露的方法和更多内容，例如在接口和实现接口的派生实体中注入实用工具（如属性、操作等）。
   - 在非静态方法中，`$_attr`/`$_op`/`$_type`（取决于接口类型）可用于引用 IR 实体的实例。在接口声明中，实例的类型是接口类。在特征声明中，实例的类型是具体实体类（如 `IntegerAttr`、`FuncOp` 等）。
-
 - 额外特征类声明(可选:`extraTraitClassDeclaration`)
 
   - 注入接口特征声明中的额外 C++ 代码。
-- 允许使用与额外共享类声明相同的替换规则。
+  - 允许使用与额外共享类声明相同的替换规则。
 
 `OpInterface` 类可能还包含以下内容：
 
 - 验证器(`verify`)
 
   - 一个 C++ 代码块，包含应用于接口所附加到的操作的额外验证。
-  - 该代码块的结构与[`Trait::verifyTrait`](https://mlir.llvm.org/docs/Traits/)方法的结构一一对应。
+  - 该代码块的结构与[`Trait::verifyTrait`](Traits/Traits.md)方法的结构一一对应。
 
 ##### 接口方法
 
@@ -353,7 +351,7 @@ def ExampleOpInterface : OpInterface<"ExampleOpInterface"> {
   - 在非静态方法中，`$_op` 和 `$_self`可用于引用派生 IR 实体的实例。
 - DefaultImplementation (可选)
   - 接口方法的可选显式默认实现。
-  - 该实现被置于附加到 IR 实体的 `Trait` 类中，不会直接影响任何接口类。因此，该方法具有与任何其他 [`Trait`](https://mlir.llvm.org/docs/Traits/) 方法相同的特点。
+  - 该实现被置于附加到 IR 实体的 `Trait` 类中，不会直接影响任何接口类。因此，该方法具有与任何其他 [`Trait`](Traits/Traits.md) 方法相同的特点。
   - `ConcreteAttr`/`ConcreteOp`/`ConcreteType` 是隐式定义的`typename`，可用于引用当前正在操作的派生 IR 实体的类型。
   - 这可以使用限定名称来引用接口类的静态字段，如 `TestOpInterface::staticMethod()`。
 
@@ -425,7 +423,7 @@ def MyInterface : OpInterface<"MyInterface"> {
 
       ```c++
       struct InterfaceTraits {
-        /// ... The `Concept` class is elided here ...... 这里省略了 `Concept` 类 ...
+        /// ... The `Concept` class is elided here ...
 
         template <typename ConcreteOp>
         struct Model : public Concept {
@@ -454,7 +452,7 @@ def MyInterface : OpInterface<"MyInterface"> {
 
       ```c++
       struct InterfaceTraits {
-        // ... 这里省略了 `Concept` 类 ...
+        /// ... The `Concept` class is elided here ...
 
         template <typename ConcreteOp>
         struct Model : public Concept {
@@ -589,7 +587,13 @@ MLIR 包括标准接口，这些接口提供的功能可能在许多不同的操
 - `CallOpInterface`- 用于表示“调用”等操作
   - `CallInterfaceCallable getCallableForCallee()`
   - `void setCalleeFromCallable(CallInterfaceCallable)`
-
+  - `ArrayAttr getArgAttrsAttr()`
+  - `ArrayAttr getResAttrsAttr()`
+  - `void setArgAttrsAttr(ArrayAttr)`
+  - `void setResAttrsAttr(ArrayAttr)`
+  - `Attribute removeArgAttrsAttr()`
+  - `Attribute removeResAttrsAttr()`
+  
 - `CallableOpInterface`- 用于表示调用操作的目标被调用方。
   - `Region * getCallableRegion()`
   - `ArrayRef<Type> getArgumentTypes()`
@@ -606,11 +610,11 @@ MLIR 包括标准接口，这些接口提供的功能可能在许多不同的操
 - `RegionKindInterface`- 用于描述区域的抽象语义。
   - `RegionKind getRegionKind(unsigned index)`- 返回在此操作中带有给定索引的区域类型。
     - RegionKind::Graph - 表示没有控制流语义的图区域
-    - RegionKind::SSACFG - 表示具有基本块和可达性的[SSA风格控制流](https://mlir.llvm.org/docs/LangRef/#control-flow-and-ssacfg-regions)区域
+    - RegionKind::SSACFG - 表示具有基本块和可达性的[SSA风格控制流](MLIR Language Reference.md#控制流和SSACFG区域)区域
 
   - `hasSSADominance(unsigned index)` - 如果在此操作中具有给定索引的区域需要支配，则返回 true。
 
 ##### SymbolInterfaces
 
-- `SymbolOpInterface` - 用于表示[`Symbol`](https://mlir.llvm.org/docs/SymbolsAndSymbolTables/#symbol)操作，这些操作直接就在定义了[`SymbolTable`](https://mlir.llvm.org/docs/SymbolsAndSymbolTables/#symbol-table)的区域内。
-- `SymbolUserOpInterface` - 用于表示引用[`Symbol`](https://mlir.llvm.org/docs/SymbolsAndSymbolTables/#symbol)操作的操作。 它提供了对符号使用进行安全、高效验证的能力以及其他功能。
+- `SymbolOpInterface` - 用于表示[`Symbol`](Symbols and Symbol Tables.md#符号)操作，这些操作直接就在定义了[`SymbolTable`](Symbols and Symbol Tables.md#符号表)的区域内。
+- `SymbolUserOpInterface` - 用于表示引用[`Symbol`](Symbols and Symbol Tables.md#符号)操作的操作。 它提供了对符号使用进行安全、高效验证的能力以及其他功能。

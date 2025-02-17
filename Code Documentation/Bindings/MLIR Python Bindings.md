@@ -1,6 +1,41 @@
-# MLIR Python Bindings
+# MLIR Python 绑定
 
 **当前状态：** 正在开发中，默认情况下未启用
+
+- [构建](#构建)
+  - [先决条件](#先决条件)
+  - [CMake变量](#Cmake变量)
+  - [推荐开发实践](#推荐开发实践)
+- [设计](#设计)
+  - [使用案例](#使用案例)
+  - [可组合模块](#可组合模块)
+  - [子模块](#子模块)
+  - [加载器](#加载器)
+  - [使用C-API](#使用C-API)
+  - [核心IR中的所有权](#核心IR中的所有权)
+  - [核心IR中的可选性和参数顺序](#核心IR中的可选性和参数顺序)
+- [用户级API](#用户级API)
+  - [上下文管理](#上下文管理)
+  - [检查IR对象](#检查IR对象)
+  - [创建IR对象](#创建IR对象)
+- [风格](#风格)
+  - [特性 vs get*()方法](#特性 vs get*()方法)
+  - [**repr** 方法](#repr方法)
+  - [驼峰式 vs 蛇式](#驼峰式 vs 蛇式)
+  - [首选伪容器](#首选伪容器)
+  - [为常见事物提供一站式助手](#为常见事物提供一站式助手)
+- [测试](#测试)
+  - [FileCheck测试示例](#FileCheck测试示例)
+- [与ODS集成](#与ODS集成)
+  - [生成 `_{DIALECT_NAMESPACE}_ops_gen.py` 包装器模块](#生成 `_{DIALECT_NAMESPACE}_ops_gen.py` 包装器模块)
+  - [扩展包装器模块的搜索路径](#扩展包装器模块的搜索路径)
+  - [包装器模块代码组织](#包装器模块代码组织)
+- [为方言提供Python绑定](#为方言提供Python绑定)
+  - [操作](#操作)
+  - [属性和类型](#属性和类型{#2})
+  - [Passes](#Passes)
+  - [其他功能](#其他功能)
+- [自由线程 (No-GIL) 支持](#自由线程 (No-GIL) 支持)
 
 ## 构建
 
@@ -17,7 +52,7 @@
 
 - **`Python3_EXECUTABLE`**:`STRING`
 
-  指定用于LLVM构建的python可执行文件，包括用于确定Python绑定的头文件/链接标志。在具有多个Python实现的系统上，强烈建议将其显式设置为首选的`python3`可执行文件。
+  指定用于LLVM构建的`python`可执行文件，包括用于确定Python绑定的头文件/链接标志。在具有多个Python实现的系统上，强烈建议将其显式设置为首选的`python3`可执行文件。
 
 ### 推荐开发实践
 
@@ -125,7 +160,7 @@ Python API 应尽可能在 C-API 的基础上进行分层。特别是对于核�
 
 考虑到有效性和上述父级处理的需要，`PyOperation`成为区域和块的所有者，并且需要是一个顶层类型，这种类型不能有别名。这让我们可以做一些事情，比如在发生突变时有选择地使实例失效，而不必担心在层次结构中存在相同操作的别名。操作也是唯一允许处于分离状态的实体，它们在上下文层面被内部存储，因此无论如何获取，一个唯一的`MlirOperation` 都不会有多个 Python`mlir.ir.Operation`对象。
 
-C/C++ API 允许区域/块被分离，但在本API 中，它大大简化了所有权模型，消除了这种可能性，这种简化允许区域/块完全依赖于其拥有的操作进行处理。将Python的`区域/块`实例的别名与底层的`MlirRegion/MlirBlock`相关联是无副作用的，因为这些对象不会在上下文中被内部存储（与操作不同）。
+C/C++ API 允许区域/块被分离，但在本API 中，它大大简化了所有权模型，消除了这种可能性，这种简化允许区域/块完全依赖于其拥有的操作进行处理。将Python的 `Region`/`Block` 实例的别名与底层的`MlirRegion/MlirBlock`相关联是无副作用的，因为这些对象不会在上下文中被内部存储（与操作不同）。
 
 如果我们想重新引入分离的区域/块，我们可以通过创建一个新的“DetachedRegion”类或类似的类来实现，这样也可以避免处理的复杂性。按照现在的方式，我们可以避免为区域和块设置全局存在的列表。我们可能在某个时候需要一个操作级别的局部列表，到那个时候，要先衡量一下发生这种变化后与 Python 中对等对象交互的难度。如果真到了那一步，我们可以灵活地解决这个问题。
 
@@ -221,7 +256,7 @@ with Context() as ctx, Location.file("f.mlir", line=42, col=1, context=ctx):
 
 操作表示为：
 
-- 通用操作类，尤其适用于未注册操作的通用处理；或
+- 通用 `Operation` 类，尤其适用于未注册操作的通用处理；或
 - `OpView` 的一个特定子类，它为操作特性提供了更多的语义载荷访问器。
 
 给定一个 `OpView` 子类，可以使用其 `.operation` 属性获取 `Operation`。给定一个 `Operation`，*只要*设置了相应的类，就可以使用其 `.opview` 属性获取相应的 `OpView`。 这通常意味着其方言的 Python 模块已被加载。默认情况下，在遍历 IR 树时，产生的是 `OpView` 版本的操作。
@@ -543,7 +578,7 @@ m.def("getContext", ...)
 
 ### repr方法
 
-有漂亮的打印输出表示的东西真的很棒:) 如果有合理的打印输出形式，那么将其连接到 `__repr__` 方法（并使用 [doctest](https://mlir.llvm.org/docs/Bindings/Python/#sample-doctest) 验证它）可以大大提高工作效率。
+有漂亮的打印输出表示的东西真的很棒:) 如果有合理的打印输出形式，那么将其连接到 `__repr__` 方法（并使用 [doctest](#sample-doctest) 验证它）可以大大提高工作效率。
 
 ### 驼峰式 vs 蛇式
 
@@ -600,9 +635,9 @@ print(region.blocks[-1])
 ### FileCheck测试示例
 
 ```python
-# 运行: %PYTHON %s | mlir-opt -split-input-file | FileCheck
+# RUN: %PYTHON %s | mlir-opt -split-input-file | FileCheck
 
-# TODO: 一旦这些内容实际存在，就移到测试工具类中。
+# TODO: Move to a test utility class once any of this actually exists.
 def print_module(f):
   m = f()
   print("// -----")
@@ -610,12 +645,12 @@ def print_module(f):
   print(m.to_asm())
   return f
 
-# 检查标签: 测试函数: create_my_op
+# CHECK-LABEL: TEST_FUNCTION: create_my_op
 @print_module
 def create_my_op():
   m = mlir.ir.Module()
   builder = m.new_op_builder()
-  # 检查: mydialect.my_operation ...
+  # CHECK: mydialect.my_operation ...
   builder.my_op()
   return m
 ```
@@ -673,7 +708,7 @@ _cext.globals.append_dialect_search_prefix("myproject.mlir.dialects")
 
 每个具体的 `OpView` 子类都进一步定义了几个公共属性：
 
-- `OPERATION_NAME` 属性，带有一个可以完全限定操作名称的字符串（例如`math.absf`）。
+- `OPERATION_NAME` 属性，带有一个可以完全限定操作名称的`str`（例如`math.absf`）。
 - *默认构建器*的 `__init__` 方法（如果为操作定义或指定了默认构建器）。
 - 每个操作数或结果的 `@property` 获取器（使用自动生成的名称来获取未命名的操作数或结果）。
 - 每个已声明属性的 `@property` 获取器、设定器和删除器。
@@ -700,7 +735,7 @@ _cext.globals.append_dialect_search_prefix("myproject.mlir.dialects")
 
 此外，每个 `OpView` 都继承了一个 `build_generic` 方法，该方法允许通过`results`和`operands`的序列（在可变参数的情况下是嵌套的）来构造。这可以用来为 Python 中不支持的操作获取一些默认的构造语义，但代价是需要一个非常通用的函数签名。
 
-#### 扩展生成的操作类
+#### 扩展生成的Op类
 
 如上所述，构建系统会为每种带有 Python 绑定的方言生成类似 `_{DIALECT_NAMESPACE}_ops_gen.py`的 Python 源代码。使用这些生成的类作为进一步定制的起点通常是可取的，因此我们提供了一种扩展机制来简化这一过程。该机制使用传统的继承与 `OpView` 注册相结合。例如，`arith.constant` 的默认构建器为
 
@@ -749,9 +784,9 @@ b = ConstantOpExt(IntegerType.get_signless(32), 42)
 
 1. `ConstantOpExt` 直接继承自生成的 `ConstantOp`；
 2. 在这种最简单的情况下，只需要调用超类的初始化器，即 `super().__init__(...)`；
-3. 为了将 `ConstantOpExt` 注册为由 `mlir.ir.Operation.opview` 返回的首选 `OpView` （参见 [操作、区域和块](https://mlir.llvm.org/docs/Bindings/Python/#operations-regions-and-blocks)），我们用 `@_cext.register_operation(_Dialect, replace=True)`来装饰该类，**其中必须使用 `replace=True`**。
+3. 为了将 `ConstantOpExt` 注册为由 `mlir.ir.Operation.opview` 返回的首选 `OpView` （参见 [操作、区域和块](#操作、区域和块)），我们用 `@_cext.register_operation(_Dialect, replace=True)`来装饰该类，**其中必须使用 `replace=True`**。
 
-在某些更复杂的情况下，可能有必要通过 `OpView.build_generic`（参见 [默认构建器](https://mlir.llvm.org/docs/Bindings/Python/#default-builder)）显式构建 `OpView`，就像生成的构建器一样。也就是说，我们必须调用 `OpView.build_generic` **，并将结果传递给 `OpView.__init__`**，这里的小问题是后者已被生成的构建器重写了。因此，我们必须调用超类的超类（“祖先”）的方法；例如：
+在某些更复杂的情况下，可能有必要通过 `OpView.build_generic`（参见 [默认构建器](#默认构建器)）显式构建 `OpView`，就像生成的构建器一样。也就是说，我们必须调用 `OpView.build_generic` **，并将结果传递给 `OpView.__init__`**，这里的小问题是后者已被生成的构建器重写了。因此，我们必须调用超类的超类（“祖先”）的方法；例如：
 
 ```python
 from mlir.dialects._scf_ops_gen import _Dialect, ForOp
@@ -774,16 +809,20 @@ Python 绑定旨在支持 MLIR 的开放方言生态系统。方言可以作为`
 
 在 Python 中，通过使用具体操作的构建函数和特性来包装通用的 `mlir.ir.Operation` 类，来提供方言中的操作。因此，无需为它们实现单独的 C API。对于在 ODS 中定义的操作， `mlir-tblgen -gen-python-op-bindings -bind-dialect=<dialect-namespace>` 命令会根据声明性描述生成 Python API。只需创建一个包含原始 ODS 定义的新`.td`文件，并将其作为 `mlir-tblgen` 调用的源文件即可。此类`.td`文件位于 [`python/mlir/dialects/`](https://github.com/llvm/llvm-project/tree/main/mlir/python/mlir/dialects)下。按照约定，`mlir-tblgen`的结果将生成一个名为`_<dialect-namespace>_ops_gen.py`的文件。生成的操作类可如上所述进行扩展。MLIR 提供了 [CMake 函数](https://github.com/llvm/llvm-project/blob/main/mlir/cmake/modules/AddMLIRPython.cmake)来自动生成此类文件。最后，必须创建一个`python/mlir/dialects/<dialect-namespace>.py`或`python/mlir/dialects/<dialect-namespace>/__init__.py`文件，并用`import`导入生成的文件，以便在 Python 中能使用 `import mlir.dialects.<dialect-namespace>` 。
 
-### 属性和类型
+### 属性和类型{#2}
 
-方言中的属性和类型在 Python 中分别作为 `mlir.ir.Attribute` 和 `mlir.ir.Type` 类的子类提供。用于属性和类型的 Python API 必须连接到用于构建和检查的相关 C API，这些API必须先提供。`Attribute`和`Type`子类的绑定可以使用 [`include/mlir/Bindings/Python/PybindAdaptors.h`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/Bindings/Python/PybindAdaptors.h) 中的工具来定义，这些工具模仿 pybind11 API 来定义函数和特性。这些子类的绑定将包含在单独的 pybind11 模块中。上述工具还提供`MlirAttribute`和`MlirType`的C API句柄与其在Python的对应句柄之间的自动转换，以便在绑定实现中可以直接使用 C API 句柄。绑定提供的方法和特性应遵循上述原则。
+方言中的属性和类型在 Python 中分别作为 `mlir.ir.Attribute` 和 `mlir.ir.Type` 类的子类提供。用于属性和类型的 Python API 必须连接到用于构建和检查的相关 C API，这些API必须先提供。`Attribute`和`Type`子类的绑定可以使用 [`include/mlir/Bindings/Python/PybindAdaptors.h`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/Bindings/Python/PybindAdaptors.h) 或[`include/mlir/Bindings/Python/NanobindAdaptors.h`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/Bindings/Python/NanobindAdaptors.h) 中的工具来定义，这些工具模仿 pybind11/nanobind API 来定义函数和特性。这些绑定应包含在单独的模块中。上述工具还提供`MlirAttribute`和`MlirType`的C API句柄与其在Python的对应句柄之间的自动转换，以便在绑定实现中可以直接使用 C API 句柄。绑定提供的方法和特性应遵循上述原则。
 
 方言的属性和类型绑定可以放在`lib/Bindings/Python/Dialect<Name>.cpp`中，并应编译成一个单独的“Python扩展”库，放在`python/mlir/_mlir_libs`中，运行时由 Python 加载。MLIR 提供了 [CMake 函数](https://github.com/llvm/llvm-project/blob/main/mlir/cmake/modules/AddMLIRPython.cmake) 来自动生成此类库。该库应在主方言文件中`import`，即`python/mlir/dialects/<dialect-namespace>.py`或`python/mlir/dialects/<dialect-namespace>/__init__.py`，以确保从 Python 加载方言时类型可用。
 
 ### Passes
 
-通过在上下文中注册特定方言的Passes，并用pass管线的API从字符串描述中进行解析，Python 中的pass管理器就可以使用特定方言的Passes了。这可以通过创建一个新的 pybind11 模块来实现，该模块定义在 `lib/Bindings/Python/<Dialect>Passes.cpp` 中，可调用用于注册的C API（必须首先提供该API）。对于使用 Tablegen 定义的声明式passes，调用`mlir-tblgen -gen-pass-capi-header`和`-mlir-tblgen -gen-pass-capi-impl`可自动生成 C API。pybind11 模块必须编译成一个单独的 “Python 扩展 ”库，该库可以在主方言文件（即`python/mlir/dialects/<dialect-namespace>.py`或`python/mlir/dialects/<dialect-namespace>/__init__.py`）中导入。如果不希望将passes与方言一起提供，也可以在一个单独的`passes`子模块中导入，放在`python/mlir/dialects/<dialect-namespace>/passes.py`中。
+通过在上下文中注册特定方言的Passes，并用pass管线的API从字符串描述中进行解析，Python 中的pass管理器就可以使用特定方言的Passes了。这可以通过创建一个新的 pybind11 模块来实现，该模块定义在 `lib/Bindings/Python/<Dialect>Passes.cpp` 中，可调用用于注册的C API（必须首先提供该API）。对于使用 Tablegen 定义的声明式passes，调用`mlir-tblgen -gen-pass-capi-header`和`-mlir-tblgen -gen-pass-capi-impl`可自动生成 C API。pybind11 模块必须编译成一个单独的 “Python 扩展 ”库，该库可以在主方言文件（即`python/mlir/dialects/<dialect-namespace>.py`或`python/mlir/dialects/<dialect-namespace>/__init__.py`）中 `import` 导入。如果不希望将passes与方言一起提供，也可以在一个单独的`passes`子模块中导入，放在`python/mlir/dialects/<dialect-namespace>/passes.py`中。
 
 ### 其他功能
 
-除了 IR 对象或passes之外的方言功能，如辅助函数，也可以像属性和类型一样暴露在 Python 中。该功能应存在 C API，然后可以使用 pybind11 和 [include/mlir/Bindings/Python/PybindAdaptors.h](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/Bindings/Python/PybindAdaptors.h)中的工具对其进行包装，以便连接到 Python API 的其余部分。绑定可以位于单独的 pybind11 模块中，或与属性和类型位于同一模块中，并与方言一起加载。
+除了 IR 对象或passes之外的方言功能，如辅助函数，也可以像属性和类型一样暴露在 Python 中。该功能应存在 C API，然后可以使用 pybind11 和 [`include/mlir/Bindings/Python/PybindAdaptors.h`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/Bindings/Python/PybindAdaptors.h)中的工具或nanobind 和[`include/mlir/Bindings/Python/NanobindAdaptors.h`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/Bindings/Python/NanobindAdaptors.h) 中的工具对其进行包装，以便连接到 Python API 的其余部分。绑定可以位于单独的模块中，或与属性和类型位于同一模块中，并与方言一起加载。
+
+## 自由线程 (No-GIL) 支持
+
+TODO

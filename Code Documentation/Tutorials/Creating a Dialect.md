@@ -1,18 +1,24 @@
 # 创建一种方言
 
+- [CMake 最佳实践](#CMake 最佳实践)
+  - [TablGen 目标](#TablGen 目标)
+  - [库目标](#库目标)
+
+- [CMake最佳实践](#CMake最佳实践)
+
 公共方言通常至少分为 3 个目录：
 
 - mlir/include/mlir/Dialect/Foo（用于公共的include文件）
 - mlir/lib/Dialect/Foo（用于源代码）
 - mlir/lib/Dialect/Foo/IR （用于操作）
-- mlir/lib/Dialect/Foo/Transforms （用于转换）
+- mlir/lib/Dialect/Foo/Transforms （用于变换）
 - mlir/test/Dialect/Foo （用于测试）
 
-除其他公共头文件外，include目录还包含一个 [ODS 格式](https://mlir.llvm.org/docs/DefiningDialects/Operations/)的 TableGen 文件，用于描述方言中的操作。该文件用于生成操作声明（FooOps.h.inc）和定义（FooOps.cpp.inc），以及操作接口声明（FooOpsInterfaces.h.inc）和定义（FooOpsInterfaces.cpp.inc）。
+除其他公共头文件外，include目录还包含一个[ODS 格式](../Defining Dialects/Operation Definition Specification (ODS).md)的 TableGen 文件，用于描述方言中的操作。该文件用于生成操作声明（FooOps.h.inc）和定义（FooOps.cpp.inc），以及操作接口声明（FooOpsInterfaces.h.inc）和定义（FooOpsInterfaces.cpp.inc）。
 
 IR目录通常包含方言函数的实现，这些函数不是由 ODS 自动生成的。这些函数通常在 FooDialect.cpp 中定义，其中会引入 FooOps.cpp.inc 和 FooOpsInterfaces.h.inc。
 
-Transforms目录包含方言的重写规则，通常在使用 [DDR 格式](https://mlir.llvm.org/docs/DeclarativeRewrites/)的 TableGen 文件中描述。
+Transforms目录包含方言的重写规则，通常在使用[DDR 格式](../Table-driven Declarative Rewrite Rule(DRR).md)的 TableGen 文件中描述。
 
 请注意，方言名称一般不应以 “Ops”为后缀，但某些仅与方言操作有关的文件（如 FooOps.cpp）可能会以 “Ops”为后缀。
 
@@ -29,7 +35,7 @@ add_mlir_doc(FooOps FooDialect Dialects/ -gen-dialect-doc)
 
 这将生成运行 mlir-tblgen 的正确规则，以及一个可用于声明依赖关系的 “MLIRFooOpsIncGen ”目标。
 
-方言转换通常在文件 FooTransforms.td 中声明。TableGen 的目标以典型的 llvm 方式描述。
+方言变换通常在文件 FooTransforms.td 中声明。TableGen 的目标以典型的 llvm 方式描述。
 
 ```cmake
 set(LLVM_TARGET_DEFINITIONS FooTransforms.td)
@@ -76,7 +82,7 @@ get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 
 转换passes应与转换本身分开，以方便只关心pass而不关心其如何用模式或其他基础设施实现的用户。例如 include/mlir/VectorToLLVM/VectorToLLVMPass.h。
 
-不属于方言定义的方言“X”的常用转换功能可以在 mlir/lib/Conversion/XCommon 中找到，例如 mlir/lib/Conversion/GPUCommon。
+不属于方言定义的方言“X”的通用转换功能可以在 mlir/lib/Conversion/XCommon 中找到，例如 mlir/lib/Conversion/GPUCommon。
 
 ### CMake最佳实践
 

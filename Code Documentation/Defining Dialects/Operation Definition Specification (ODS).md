@@ -2,9 +2,45 @@
 
 除了特化`mlir::Op`C++ 模板外，MLIR 还支持以表驱动的方式定义操作和数据类型。这是通过 TableGen 实现的，[TableGen](https://llvm.org/docs/TableGen/index.html) 既是一种通用语言，也是维护特定领域信息记录的工具。有关操作的事实可简明扼要地指定到 TableGen 记录中，在编译器构建时，该记录将扩展为等效的`mlir::Op`C++ 模板特化。
 
-本手册详细解释了以这种表驱动方式定义操作的所有可用机制。本手册旨在提供规范而非成为一个教程。后者请参阅[添加 MLIR 图重写的快速入门教程](https://mlir.llvm.org/docs/Tutorials/QuickstartRewrites/)。
+本手册详细解释了以这种表驱动方式定义操作的所有可用机制。本手册旨在提供规范而非成为一个教程。后者请参阅[添加 MLIR 图重写的快速入门教程](../Tutorials/Quickstart tutorial to adding MLIR graph rewrite.md)。
 
 除了详细介绍每种机制外，本手册还尝试确定最佳实践。它们以符号列表的形式呈现。
+
+- [动机](#动机)
+- [优势](#优势)
+- [TableGen语法](#TableGen语法)
+- [操作定义](#操作定义)
+  - [操作名称](#操作名称)
+  - [操作文档](#操作文档)
+  - [操作参数](#操作参数)
+  - [操作区域](#操作区域)
+  - [操作结果](#操作结果)
+  - [操作后继](#操作后继)
+  - [操作特征和约束](#操作特征和约束)
+  - [构建方法](#构建方法)
+  - [自定义解析和输出方法](#自定义解析和输出方法)
+  - [自定义验证器代码](#自定义验证器代码)
+  - [声明性装配格式](#声明性装配格式)
+  - [`hasCanonicalizer`](https://mlir.llvm.org/docs/DefiningDialects/Operations/#hascanonicalizer)
+  - [`hasCanonicalizeMethod`](https://mlir.llvm.org/docs/DefiningDialects/Operations/#hascanonicalizemethod)
+  - [`hasFolder`](https://mlir.llvm.org/docs/DefiningDialects/Operations/#hasfolder)
+  - [额外声明](#额外声明)
+  - [额外定义](#额外定义)
+  - [生成的C++代码](#生成的C++代码)
+- [约束](#约束)
+  - [单实体约束](#单实体约束)
+  - [多实体约束](#多实体约束)
+  - [特征](#特征)
+  - [如何指定新约束](#如何指定新约束)
+- [属性定义](#属性定义)
+  - [属性装饰器](#属性装饰器)
+  - [枚举属性](#枚举属性)
+- [调试建议](#调试建议)
+  - [运行`mlir-tblgen`查看生成的内容](#运行`mlir-tblgen`查看生成的内容)
+- [附录](#附录)
+  - [在TableGen中报告弃用](#在TableGen中报告弃用)
+  - [在C++中报告弃用](#在C++中报告弃用)
+  - [需求和现有机制分析](#需求和现有机制分析)
 
 ## 动机
 
@@ -21,7 +57,7 @@ MLIR 允许可插拔的方言，而方言包含操作列表等。这种开放且
 与 C++ 模板相比，这种表驱动的方法有几个优点，包括但不限于以下几点：
 
 - **单一事实来源**：我们努力将有关操作的所有事实编码到记录中，这样读者就不需要在代码片段中跳转，就能完全了解操作。
-- **移除样板**： 我们可以从记录中自动生成操作数/属性/结果的获取方法、操作构建方法、操作验证方法以及更多实用工具。这大大减少了定义新操作所需的样板代码。
+- **移除样板代码**： 我们可以从记录中自动生成操作数/属性/结果的获取方法、操作构建方法、操作验证方法以及更多实用工具。这大大减少了定义新操作所需的样板代码。
 - **促进自动生成**：这些操作信息记录的用途绝不仅限于操作定义本身。我们可以使用它们来驱动许多其他组件的自动生成，例如计算图序列化。
 
 ## TableGen语法
@@ -29,7 +65,7 @@ MLIR 允许可插拔的方言，而方言包含操作列表等。这种开放且
 我们使用 TableGen 作为指定操作信息的语言。TableGen 本身只是提供了写记录的语法；TableGen 文件（通常文件后缀名为`.td`）中允许使用的语法和结构可以[在此处](https://llvm.org/docs/TableGen/ProgRef.html)找到。
 
 - TableGen `class`类似于 C++ 类；可以模板化和子类化。
-- TableGen`def`类似于 C++ 对象；它可以通过特化一个TableGen 类来声明（例如，`def MyDef : MyClass<...>;`) ，或完全独立声明（例如，`def MyDef;`）。它不能进一步模板化或子类化。
+- TableGen`def`类似于 C++ 对象；它可以通过特化一个TableGen  `class` 来声明（例如，`def MyDef : MyClass<...>;`) ，或完全独立声明（例如，`def MyDef;`）。它不能进一步模板化或子类化。
 - TableGen`dag`是专用于表示元素的有向无环图类型。一个`dag`有一个操作符和零个或多个参数。其语法为`(operator arg0, arg1, argN)`。操作符可以是任何 TableGenn`def`；参数可以是任何东西，包括`dag`本身。我们可以为操作符和参数命名，如`(MyOp:$op_name MyArg:$arg_name)`。
 
 请参阅 [语言参考](https://llvm.org/docs/TableGen/ProgRef.html) 以了解 TableGen 支持的所有类型和表达式。
@@ -39,12 +75,12 @@ MLIR 允许可插拔的方言，而方言包含操作列表等。这种开放且
 MLIR 定义了几种常用的结构来帮助定义操作，并通过特殊的[TableGen 后端](https://llvm.org/docs/TableGen/BackEnds.html#introduction): [`OpDefinitionsGen`](https://github.com/llvm/llvm-project/blob/main/mlir/tools/mlir-tblgen/OpDefinitionsGen.cpp)提供它们的语义。这些结构定义在 [`OpBase.td`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/OpBase.td) 中。主要有：
 
 - `Op` 类：它是定义操作的主要结构。在如下结构的帮助下，有关操作的所有事实在特化此类时被指定。
-- `Dialect` 类：属于一个逻辑组的操作被置于同一方言中。方言类包含方言层面的信息。
+- `Dialect` 类：属于一个逻辑组的操作被置于同一方言中。`Dialect`类包含方言层面的信息。
 - `OpTrait` 类层次结构：它们用于指定操作的特殊特性和约束，包括操作是否有副作用，或其输出是否与输入具有相同的形状。
 - `ins`/`outs` 标记： 这是 `OpDefinitionsGen` 后端内置的两个特殊标记。它们分别指向操作数/属性和结果的定义。
 - `TypeConstraint` 类层次结构：它们用于指定操作数或结果的约束。一个值得注意的子类层次是`Type`，它代表常见 C++ 类型的约束。
 - `AttrConstraint`类层次结构： 它们用于指定对属性的约束。一个值得注意的子类层次是 `Attr`，它代表对值为常见类型的属性的约束。
-- `Property`类层次结构： 它们用于指定操作固有的非属性特性。这将在未来扩展到 `PropertyConstraint` 类或类似类。
+- `Property`类层次结构： 它们用于指定操作固有的非属性支持的特性。这些属性可以使用 `predicate`字段或 `ConfinedProp` 类施加约束。
 
 操作是通过用它需要的所有字段的具体内容特化 `Op` 类来定义的。例如`tf.AvgPool`定义是：
 
@@ -84,7 +120,7 @@ window in `value`.
 
 ### 操作文档
 
-这包括单行摘要和较长的人类可读的描述。它们将用于驱动方言文档的自动生成。它们需要在操作的定义正文中提供：
+这包括单行 `summary` 和较长的人类可读的 `description`。它们将用于驱动方言文档的自动生成。它们需要在操作的定义正文中提供：
 
 ```tablegen
 let summary = "...";
@@ -107,13 +143,13 @@ let description = [{
 
 1. 固有属性：这些属性会影响操作的行为（如用于卷积的填充）；
 
-2. 派生属性：定义操作不需要这些属性，而是从操作信息派生。例如，类型的输出形状。这主要用于简便接口生成或与其他框架/翻译转换的交互。
+2. 派生属性：定义操作不需要这些属性，而是从操作信息派生。例如，类型的输出形状。这主要用于简便接口生成或与其他框架/翻译的交互。
 
    所有派生属性都应该可以作为属性来具体化。也就是说，即使它们没有被具体化，也应该可以作为属性来存储。
 
 特性与属性类似，只是它们不存储在 MLIR 上下文中，而是与操作一起内联存储。
 
-操作数、属性和特性都是在以`ins`为首的`dag`类型参数中指定的：
+操作数、属性和特性都是在以`ins`为首的`dag`类型 `arguments` 中指定的：
 
 ```tablegen
 let arguments = (ins
@@ -125,9 +161,9 @@ let arguments = (ins
 );
 ```
 
-这里的 `<type-constraint>` 是 `TypeConstraint` 类层次结构中的 TableGen `def`。同样，`<attr-constraint>` 是 `AttrConstraint` 类层次结构中的 TableGen `def`，而`<property-constraint>` 是 `Property` 的子类（尽管计划建立 `PropertyConstraint` 层次结构）。有关更多信息，请参阅[约束](https://mlir.llvm.org/docs/DefiningDialects/Operations/#constraints)。
+这里的 `<type-constraint>` 是 `TypeConstraint` 类层次结构中的 TableGen `def`。同样，`<attr-constraint>` 是 `AttrConstraint` 类层次结构中的 TableGen `def`，而 `<property>` 是 `Property` 的子类（可以使用其 `predicate` 字段或 `ConfinedProp` 子类对其施加约束）。
 
-对操作数和属性的相对顺序没有要求；它们可以自由混合。操作数本身的相对顺序很重要。每个命名的参数都会生成一个命名的获取器，该获取器返回带有返回类型的参数（对于属性，返回类型将从存储类型构造，而对于操作数，返回类型则是`Value`）。每个属性的原始值（如存储值）也可以通过生成的 `<name>Attr` 获取器访问，以便在更用户友好的返回类型不太合适的转换passes中使用。
+对操作数和属性的相对顺序没有要求；它们可以自由混合。操作数本身的相对顺序很重要。每个命名的参数都会生成一个命名的获取器，该获取器返回带有返回类型的参数（对于属性，返回类型将从存储类型构造，而对于操作数，返回类型则是`Value`）。每个属性的原始值（如存储值）也可以通过生成的 `<name>Attr` 获取器访问，以便在更用户友好的返回类型不太合适的变换passes中使用。
 
 所有参数都应命名来：
 
@@ -171,23 +207,23 @@ let arguments = (ins
 
 目前，支持以下初级约束：
 
-- `IntMinValue<N>`:指定大于或等于 N 的整数属性
-- `IntMaxValue<N>`:指定小于或等于 N 的整数属性
-- `IntNEQValue<N>`:指定不等于 N 的整数属性
+- `IntMinValue<N>`:指定大于或等于 `N` 的整数属性
+- `IntMaxValue<N>`:指定小于或等于 `N` 的整数属性
+- `IntNEQValue<N>`:指定不等于 `N` 的整数属性
 - `IntPositive`:指定值为正的整数属性
 - `IntNonNegative`:指定值为非负数的整数属性
-- `ArrayMinCount<N>`: 指定至少有 N 个元素的数组属性
-- `ArrayMaxCount<N>`: 指定最多有 N 个元素的数组属性
-- `ArrayCount<N>`: 指定正好有 N 个元素的数组属性
-- `DenseArrayCount<N>`:指定正好有 N 个元素的密集数组属性
+- `ArrayMinCount<N>`: 指定至少有 `N` 个元素的数组属性
+- `ArrayMaxCount<N>`: 指定最多有 `N` 个元素的数组属性
+- `ArrayCount<N>`: 指定正好有 `N` 个元素的数组属性
+- `DenseArrayCount<N>`:指定正好有 `N` 个元素的密集数组属性
 - `DenseArrayStrictlyPositive<arrayType>`: 指定`arrayType`类型的密集数组属性，使其所有元素为正值。
 - `DenseArrayStrictlyNonNegative<arrayType>`: 指定`arrayType`类型的密集数组属性，使其所有元素为非负值。
 - `DenseArraySorted<arrayType>`:指定`arrayType`类型的密集数组属性，使其元素按非递减顺序排列。
 - `DenseArrayStrictlySorted<arrayType>`: 指定`arrayType`类型的密集数组属性，使其元素按递增顺序排列。
-- `IntArrayNthElemEq<I, N>`: 指定整数数组属性，使其第I个元素等于N
-- `IntArrayNthElemMinValue<I, N>`: 指定整数数组属性，使其第I个元素大于或等于 N
-- `IntArrayNthElemMaxValue<I, N>`: 指定整数数组属性，使其第I个元素小于或等于 N
-- `IntArrayNthElemInRange<I, M, N>`: 指定整数数组属性，使其第I个元素大于或等于 M且小于或等于 N
+- `IntArrayNthElemEq<I, N>`: 指定整数数组属性，使其第`I`个元素等于`N`
+- `IntArrayNthElemMinValue<I, N>`: 指定整数数组属性，使其第`I`个元素大于或等于 `N`
+- `IntArrayNthElemMaxValue<I, N>`: 指定整数数组属性，使其第`I`个元素小于或等于 `N`
+- `IntArrayNthElemInRange<I, M, N>`: 指定整数数组属性，使其第`I`个元素大于或等于 `M`且小于或等于 `N`
 - `IsNullAttr`: 指定必须为空的可选属性
 
 TODO：设计并实现更多初级约束
@@ -273,7 +309,7 @@ let successors = (successor
 
 特征是影响语法或语义的操作特性。MLIR C++ 在`mlir::OpTrait`命名空间中建立了各种特征模型。
 
-涉及多个操作数/属性/结果的操作特征、[接口](https://mlir.llvm.org/docs/Interfaces/#utilizing-the-ods-framework)和约束都作为 `Op` 类的第三个模板参数提供。它们应从 `OpTrait` 类派生。有关更多信息，请参阅[约束](https://mlir.llvm.org/docs/DefiningDialects/Operations/#constraints)。
+涉及多个操作数/属性/结果的操作特征、[接口](../Interfaces.md#利用 ODS 框架)和约束都作为 `Op` 类的第三个模板参数提供。它们应从 `OpTrait` 类派生。有关更多信息，请参阅[约束](#约束)。
 
 ### 构建方法
 
@@ -344,14 +380,14 @@ static void build(OpBuilder &odsBuilder, OperationState &odsState,
 
 第二种和第三种形式适合用于手工编写的代码，因为它们通过签名提供了更好的保证。
 
-如果操作的任何属性具有不同于 `Attr.storageType` 的 `Attr.returnType`，并且我们知道如何从解包的值构建属性（即定义了 `Attr.constBuilderCall`），则将生成第三种形式。此外，对于第三种形式，如果在 `arguments` 列表中后面出现的属性有默认值，则将在声明中提供默认值。目前，这适用于 `BoolAttr`、`StrAttr` 和 `EnumAttr`，将来这个列表还会增加。因此，如果可能的话，默认值属性应放在`arguments`列表的末尾，以充分利用这一特性。(这种行为主要是由于 C++ 函数参数默认值位置的限制）。否则，仍将生成第三种形式的构建器，但构建器的签名中将不提供不在参数列表末尾的属性的默认值。
+如果操作的任何属性具有不同于 `Attr.storageType` 的 `Attr.returnType`，并且我们知道如何从解包的值构建属性（即定义了 `Attr.constBuilderCall`），则将生成第三种形式。此外，对于第三种形式，如果在 `arguments` 列表中后面出现的属性有默认值，则将在声明中提供默认值。目前，这适用于 `BoolAttr`、`StrAttr` 和 `EnumAttr`，将来这个列表还会增加。因此，如果可能的话，默认值属性应放在`arguments`列表的末尾，以充分利用这一特性。(这种行为主要是由于 C++ 函数参数默认值位置的限制）。否则，仍将生成第三种形式的构建器，但构建器的签名中将不提供不在 `arguments` 列表末尾的属性的默认值。
 
 在下列情况下，ODS 将生成一个不需要指定返回类型的构建器：
 
-- 操作实现了InferTypeOpInterface接口；
+- Op实现了InferTypeOpInterface接口；
 - 所有返回类型要么是可构建的类型，要么与给定的操作数相同（例如，操作数和结果之间的 `AllTypesMatch` 约束）；
 
-根据具体操作，还可能存在其他构建器；完整列表请参阅[生成的 C++ 文件](https://mlir.llvm.org/docs/DefiningDialects/Operations/#run-mlir-tblgen-to-see-the-generated-content)。
+根据具体操作，还可能存在其他构建器；完整列表请参阅[生成的 C++ 文件](#运行`mlir-tblgen`查看生成的内容)。
 
 #### 自定义构建方法
 
@@ -367,7 +403,7 @@ def MyOp : Op<"my_op", []> {
 }
 ```
 
-`builders` 字段是添加到操作类的自定义构建器列表。在这个示例中，我们提供了一个便捷的构建器，它使用浮点值而不是属性。`ins` 前缀对于 ODS 中的许多函数声明都是通用的，这些声明使用 TableGen [`dag`](https://mlir.llvm.org/docs/DefiningDialects/Operations/#tablegen-syntax)。ins后跟一个以逗号分隔的类型（带引号字符串）和名称列表，名称前缀为 `$` 符号。这将生成如下的构建器方法声明：
+`builders` 字段是添加到操作类的自定义构建器列表。在这个示例中，我们提供了一个便捷的构建器，它使用浮点值而不是属性。`ins` 前缀对于 ODS 中的许多函数声明都是通用的，这些声明使用 TableGen [`dag`](#Tablegen语法)。ins后跟一个以逗号分隔的类型（带引号字符串）和名称列表，名称前缀为 `$` 符号。这将生成如下的构建器方法声明：
 
 ```c++
 class MyOp : /*...*/ {
@@ -412,14 +448,14 @@ def MyOp : Op<"my_op", []> {
 根据 C++ 的要求，生成的代码将在声明中使用默认值，而不在定义中使用默认值。
 
 ```c++
-// 头文件。
+/// 头文件。
 class MyOp : /*...*/ {
   /*...*/
   static void build(::mlir::OpBuilder &builder, ::mlir::OperationState &state,
                     float val = 0.5f);
 };
 
-// 源文件。
+/// 源文件。
 MyOp::build(::mlir::OpBuilder &builder, ::mlir::OperationState &state,
             float val) {
   state.addAttribute("attr", builder.getF32FloatAttr(val));
@@ -432,7 +468,7 @@ MyOp::build(::mlir::OpBuilder &builder, ::mlir::OperationState &state,
 
 ### 自定义验证器代码
 
-将为操作的各个实体上指定的[约束](https://mlir.llvm.org/docs/DefiningDialects/Operations/#constraints)自动生成验证代码。要执行额外的验证，可以使用：
+将为操作的各个实体上指定的[约束](#约束)自动生成验证代码。要执行额外的验证，可以使用：
 
 ```tablegen
 let hasVerifier = 1;
@@ -457,7 +493,7 @@ let hasRegionVerifier = 1;
 
 请注意，第二阶段将在区域中的操作通过验证后运行。顺序更靠后的验证器可以依赖前一个验证器验证过的某些不变量，而无需重新验证。
 
-#### 在自定义验证器中生成提示
+#### 在自定义验证器中发出诊断信息
 
 自定义验证器应避免使用自定义的操作打印输出器来打印输出操作，因为它们需要首先验证被打印输出的那些操作（有时还包括其父操作）。特别是，在生成提示时，自定义验证器应使用 `Error` 这一严重性级别（该级别默认以通用形式打印输出操作），避免使用较低的严重性级别（`Note`, `Remark`, `Warning`）。
 
@@ -494,9 +530,9 @@ def CallOp : Std_Op<"call", ...> {
   - 如果该字典存在，那么`attr-dict` 将不包含任何固有属性。
 - `custom < UserDirective > ( Params )`
   - 表示用户用 C++ 实现的自定义指令。
-  - 详见下面的 [Custom Directives](https://mlir.llvm.org/docs/DefiningDialects/Operations/#custom-directives) 部分。
+  - 详见下面的 [Custom Directives](#自定义指令) 部分。
 - `functional-type ( inputs , outputs )`
-  - 将 `inputs` 和 `outputs` 参数格式化为[函数类型](https://mlir.llvm.org/docs/Dialects/Builtin/#functiontype)。
+  - 将 `inputs` 和 `outputs` 参数格式化为[函数类型](../Dialects/Builtin Dialect.md#FunctionType)。
   - `inputs` 和 `outputs` 的约束与 `type` 指令的 `input` 相同。
 - ``oilist ( `keyword` elements | `otherKeyword` elements ...)``
   - 表示与顺序无关的可选子句列表。每个子句都有一个关键字和相应的装配格式。
@@ -517,7 +553,7 @@ def CallOp : Std_Op<"call", ...> {
   - 表示操作的所有后续操作。
 - `type ( input )`
   - 表示给定输入的类型。
-  - `input` 必须是操作数或结果[变量](https://mlir.llvm.org/docs/DefiningDialects/Operations/#variables)、`operands`指令或`results`指令。
+  - `input` 必须是操作数或结果[变量](#变量)、`operands`指令或`results`指令。
 - `qualified ( type_or_attribute )`
   - 包装 `type` 指令或属性参数。
   - 用于强制打印输出以方言和助记符为前缀的类型或属性。例如，`vector.multi_reduction` 操作具有 `kind` 属性；默认情况下，声明性装配格式将输出：`vector.multi_reduction <minf>, ...`，但在声明性装配格式中使用 `qualified($kind)` 后将输出为： `vector.multi_reduction #vector.kind<minf>, ...` 。
@@ -528,9 +564,7 @@ def CallOp : Std_Op<"call", ...> {
 
 以下是一组有效的标点符号：
 
-```
 `:`, `,`, `=`, `<`, `>`, `(`, `)`, `{`, `}`, `[`, `]`, `->`, `?`, `+`, `*`
-```
 
 以下是有效的空白标点符号：
 
@@ -550,7 +584,7 @@ let assemblyFormat = [{
 }
 ```
 
-空字面量` `可用于删除隐式插入在某些字面量元素之后的空格。例如，当“]”不是格式中的最后一个元素时，它可能会导致输出结果看起来像是“] ”。在这种情况下，如果写作“]``”就可以消除那个尾随空格。
+空字面量` `可用于删除隐式插入在某些字面量元素之后的空格，例如 `)` / `]` /等。例如，当“`]`”不是格式中的最后一个元素时，它可能会导致输出结果看起来像是 `]` 。在这种情况下，如果写作“`]` ``”就可以消除那个尾随空格。
 
 #### 变量
 
@@ -566,7 +600,7 @@ let assemblyFormat = [{
 custom-directive ::= `custom` `<` UserDirective `>` `(` Params `)`
 ```
 
-自定义指令有两个主要部分：`UserDirective` 和 `Params`。在为格式生成C++代码时，自定义指令会被转换为对 `print*` 和 `parse*` 方法的调用。`UserDirective` 是用作这两个调用的后缀的标识符，即`custom<MyDirective>(...)`将导致在解析器和打印输出器中分别调用 `parseMyDirective` 和 `printMyDirective`。`Params`可以是变量（即属性、操作数、后继等）、类型指令、`attr-dict`和 C++ 代码字符串的任意组合。类型指令必须引用一个变量，但该变量不必也是自定义指令的参数。
+自定义指令有两个主要部分：`UserDirective` 和 `Params`。在为格式生成C++代码时，自定义指令会被变换为对 `print*` 和 `parse*` 方法的调用。`UserDirective` 是用作这两个调用的后缀的标识符，即`custom<MyDirective>(...)`将导致在解析器和打印输出器中分别调用 `parseMyDirective` 和 `printMyDirective`。`Params`可以是变量（即属性、操作数、后继等）、类型指令、`attr-dict`和 C++ 代码字符串的任意组合。类型指令必须引用一个变量，但该变量不必也是自定义指令的参数。
 
 `parse<UserDirective>` 方法的参数首先是对 `OpAsmParser`(`OpAsmParser &`) 的引用，其次是一组与格式中指定的参数相对应的输出参数。声明性参数到 `parse` 方法参数的映射详见下文：
 
@@ -664,7 +698,7 @@ def ReturnOp : ... {
 
 ##### 单位属性
 
-在 MLIR 中，[`unit` 属性](https://mlir.llvm.org/docs/Dialects/Builtin/#unitattr)比较特殊，因为它只有一个可能的值，即它从其存在中获得意义。当单位属性被用来锚定一个可选组，并且不是该组的第一个元素时，单位属性的存在就可以直接与可选组本身的存在相关联。因此，在这些情况下，单位属性不会被打印输出或出现在输出中，并且将在解析时根据可选组本身的存在自动推断出来。
+在 MLIR 中，[`unit` 属性](../Dialects/Builtin Dialect.md#UnitAttr)比较特殊，因为它只有一个可能的值，即它从其存在中获得意义。当单位属性被用来锚定一个可选组，并且不是该组的第一个元素时，单位属性的存在就可以直接与可选组本身的存在相关联。因此，在这些情况下，单位属性不会被打印输出或出现在输出中，并且将在解析时根据可选组本身的存在自动推断出来。
 
 例如，下面的操作：
 
@@ -686,11 +720,11 @@ foo.op is_read_only
 foo.op
 ```
 
-同样的逻辑也适用于 `UnitProperty`.
+同样的逻辑也适用于`UnitProp`。
 
 ##### 可选else组
 
-可选组还支持 “else”元素组。如果可选组的锚点元素不存在，这些元素将被解析/打印输出。与主元素组不同，“else”组对第一个元素没有限制，而且没有一个元素可以作为可选元素的锚点。下面是一个例子：
+可选组还支持 “else”元素组。如果可选组的 `anchor` 元素不存在，这些元素将被解析/打印输出。与主元素组不同，“else”组对第一个元素没有限制，而且没有一个元素可以作为可选元素的 `anchor` 。下面是一个例子：
 
 ```tablegen
 def FooOp : ... {
@@ -730,7 +764,7 @@ foo.op foo_is_absent
 
 -  可构建类型
 
-某些类型约束可能只有一种表示形式，允许它们可以直接构建；例如 `I32` 或 `Index` 类型。ODS 中的类型可以通过设置 `builderCall` 字段或从 `BuildableType` 类继承来将自身标记为可构建类型。
+某些类型约束可能只有一种表示形式，允许它们可以直接构建；例如 `I32` 或 `Index` 类型。`ODS` 中的类型可以通过设置 `builderCall` 字段或从 `BuildableType` 类继承来将自身标记为可构建类型。
 
 - 特征相等约束
 
@@ -766,7 +800,7 @@ foo.op foo_is_absent
 
 [OpDefinitionsGen](https://github.com/llvm/llvm-project/blob/main/mlir/tools/mlir-tblgen/OpDefinitionsGen.cpp)处理操作定义规范文件，并生成两个包含相应 C++ 代码的文件：一个是声明文件，另一个是定义文件。前者通过 `-gen-op-decls` 命令行选项生成，后者通过 `-gen-op-defs` 选项生成。
 
-定义文件包含所有操作方法定义，可以通过定义 `GET_OP_CLASSES`来包含和启用这些定义。OpDefinitionsGen 会为每个操作生成一个操作类和一个[操作数适配器](https://mlir.llvm.org/docs/DefiningDialects/Operations/#operand-adaptors)类。此外，它还包含一个以逗号分隔的所有已定义操作的列表，可以通过定义 `GET_OP_LIST`来包含和启用这些操作。
+定义文件包含所有操作方法定义，可以通过定义 `GET_OP_CLASSES`来包含和启用这些定义。OpDefinitionsGen 会为每个操作生成一个操作类和一个[操作数适配器](#操作数适配器)类。此外，它还包含一个以逗号分隔的所有已定义操作的列表，可以通过定义 `GET_OP_LIST`来包含和启用这些操作。
 
 #### 类名和命名空间
 
@@ -774,7 +808,7 @@ foo.op foo_is_absent
 
 生成的 C++ 类的命名空间将来自方言的 `cppNamespace` 字段。例如，如果某个方言的 `cppNamespace` 是 `A::B` ，那么该方言的操作将被置于 `namespace A { namespace B { ... } }`中。如果方言没有指定 `cppNamespace` ，我们就使用方言的名称作为命名空间。
 
-这意味着生成的 C++ 类的限定名称不一定与[操作名称](https://mlir.llvm.org/docs/DefiningDialects/Operations/#operation-name)部分中所述的操作名称完全一致。这是为了允许灵活命名，以满足编码风格的要求。
+这意味着生成的 C++ 类的限定名称不一定与[操作名称](#操作名称)部分中所述的操作名称完全一致。这是为了允许灵活命名，以满足编码风格的要求。
 
 #### 操作数适配器
 
@@ -812,7 +846,7 @@ void process(AddOp op, ArrayRef<Value> newOperands) {
 #include "MyDialectOps.cpp.inc"
 ```
 
-注意：这需要重构方言库中的共享的实用工具函数，以便它们可以被多个编译单元共享。也就是说，你应该在共享头文件中声明这些方法，并在它们各自的源文件中定义它们，而不是在同一个源文件中定义静态方法。
+注意：这需要重构方言库中的共享的实用工具函数，以便它们可以被多个编译单元共享。也就是说，你应该在共享头文件中声明这些方法，并在它们各自的源文件中定义它们，而不是在同一个源文件中定义 `static` 方法。
 
 操作注册钩子也是分片的，因为模板实例化可能需要很长的编译时间。操作应在你的方言中注册，如：
 
@@ -888,7 +922,7 @@ cc_library(
 
 ### 单实体约束
 
-范围限定为单个操作数、属性或结果的约束在实体的声明位置指定，正如[操作参数](https://mlir.llvm.org/docs/DefiningDialects/Operations/#operation-arguments)和[操作结果](https://mlir.llvm.org/docs/DefiningDialects/Operations/#operation-results)中所述的。
+范围限定为单个操作数、属性或结果的约束在实体的声明位置指定，正如[操作参数](#操作参数)和[操作结果](#操作结果)中所述的。
 
 为了帮助对常见类型的约束进行建模，创建了一组 `TypeConstraint`；它们是 `Type` 子类层次结构。它包括用于浮点数约束的 `F32`、用于浮点数张量约束的 `TensorOf<[F32]>` 等。
 
@@ -896,13 +930,13 @@ cc_library(
 
 ### 多实体约束
 
-涉及多个操作数/属性/结果的约束在操作中很常见，如操作数和结果之间的元素类型和形状关系。这些约束应指定为 `Op` 类模板参数，详见[操作特征和约束](https://mlir.llvm.org/docs/DefiningDialects/Operations/#operation-traits-and-constraints)。
+涉及多个操作数/属性/结果的约束在操作中很常见，如操作数和结果之间的元素类型和形状关系。这些约束应指定为 `Op` 类模板参数，详见[操作特征和约束](#操作特征和约束)。
 
 多实体约束在 [`OpBase.td`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/OpBase.td)中被建模为 `PredOpTrait`（`OpTrait`的子类）。我们提供了一系列约束原语来帮助规范建模约束。有关完整列表，请参阅 [`OpBase.td`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/OpBase.td)。
 
 ### 特征
 
-特征是操作的固有特性，如是否有副作用、是否可交换、是否是终止符等。如[操作特征和约束](https://mlir.llvm.org/docs/DefiningDialects/Operations/#operation-traits-and-constraints)中所述，这些约束应指定为 `Op` 类模板参数。
+特征是操作的固有特性，如是否有副作用、是否可交换、是否是终止符等。如[操作特征和约束](#操作特征和约束)中所述，这些约束应指定为 `Op` 类模板参数。
 
 在 [`OpBase.td`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/OpBase.td)中，特征被建模为 `NativeOpTrait`（`OpTrait`的子类）。它们被支持并将被翻译成相应的 C++ `mlir::OpTrait` 类。
 
@@ -977,17 +1011,17 @@ ODS 属性被定义为具有一种存储类型（对应于背后的 `mlir::Attri
 
 有一些重要的属性适配器/装饰器/修饰符可以应用于 ODS 属性，以指定常见的附加属性，如可选性、默认值等：
 
-- `DefaultValuedAttr`: 指定属性的[默认值](https://mlir.llvm.org/docs/DefiningDialects/Operations/#attributes-with-default-values)。
-- `OptionalAttr`: 指定属性为[可选](https://mlir.llvm.org/docs/DefiningDialects/Operations/#optional-attributes)。
-- `ConfinedAttr`: 使用[进一步的约束](https://mlir.llvm.org/docs/DefiningDialects/Operations/#confining-attributes)来调整属性。
-- `AllAttrOf`:用[多重约束](https://mlir.llvm.org/docs/DefiningDialects/Operations/#combining-constraints)来调整属性。
+- `DefaultValuedAttr`: 指定属性的[默认值](#带默认值的属性)。
+- `OptionalAttr`: 指定属性为[可选](#可选属性)。
+- `ConfinedAttr`: 使用[进一步的约束](#受限属性)来调整属性。
+- `AllAttrOf`:用[多重约束](#组合约束)来调整属性。
 
 ### 枚举属性
 
 有些属性只能从预定义的枚举中取值，例如比较操作的比较类型。为了定义这类属性，ODS 提供了几种机制：`IntEnumAttr` 和 `BitEnumAttr`。
 
-- `IntEnumAttr`: 每个枚举项都是一个整数，属性以 [`IntegerAttr`](https://mlir.llvm.org/docs/Dialects/Builtin/#integertype)的形式存储在操作中。
-- `BitEnumAttr`:每个枚举项都是空项、单个比特或一组单个比特，属性以 [`IntegerAttr`](https://mlir.llvm.org/docs/Dialects/Builtin/#integertype) 的形式存储在操作中。
+- `IntEnumAttr`: 每个枚举项都是一个整数，属性以 [`IntegerAttr`](../Dialects/Builtin Dialect.md#IntegerType)的形式存储在操作中。
+- `BitEnumAttr`:每个枚举项都是空项、单个比特或一组单个比特，属性以 [`IntegerAttr`](../Dialects/Builtin Dialect.md#IntegerType) 的形式存储在操作中。
 
 所有这些 `*EnumAttr` 属性都需要通过相应的 `*EnumAttrCase` 来完全指定所有允许的情况。这样，ODS 就能生成额外的验证，只接受允许的情况。为了促进 `*EnumAttr`s 与其 C++ 使用者之间的交互，[`EnumsGen`](https://github.com/llvm/llvm-project/blob/main/mlir/tools/mlir-tblgen/EnumsGen.cpp) TableGen 后端可以生成一些常用工具：C++ 枚举类、用于枚举类的 `llvm::DenseMapInfo` 以及字符串之间的转换函数。这可以通过 `mlir-tblgen` 的 `-gen-enum-decls` 和 `-gen-enum-defs` 命令行选项来控制。
 
@@ -1010,7 +1044,7 @@ def MyIntEnum: I32EnumAttr<"MyIntEnum", "An example int enum",
 ```c++
 namespace Outer {
 namespace Inner {
-// 一个 int 枚举示例
+// An example int enum
 enum class MyIntEnum : uint32_t {
   Case15 = 15,
   Case20 = 20,
@@ -1096,7 +1130,7 @@ def MyBitEnum: BitEnumAttr<"MyBitEnum", "An example bit enum",
 我们可以有：
 
 ```c++
-// 比特枚举示例
+// An example bit enum
 enum class MyBitEnum : uint32_t {
   None = 0,
   Bit0 = 1,
@@ -1119,7 +1153,7 @@ inline constexpr MyBitEnum operator^(MyBitEnum a, MyBitEnum b) {
   return static_cast<MyBitEnum>(static_cast<uint32_t>(a) ^ static_cast<uint32_t>(b));
 }
 inline constexpr MyBitEnum operator~(MyBitEnum bits) {
-  // 确保只设置枚举中可能出现的位
+  // Ensure only bits that can be present in the enum are set
   return static_cast<MyBitEnum>(~static_cast<uint32_t>(bits) & static_cast<uint32_t>(15u));
 }
 inline constexpr bool bitEnumContainsAll(MyBitEnum bits, MyBitEnum bit) {
@@ -1170,7 +1204,7 @@ template<> struct DenseMapInfo<::MyBitEnum> {
 std::string stringifyMyBitEnum(MyBitEnum symbol) {
   auto val = static_cast<uint32_t>(symbol);
   assert(15u == (15u | val) && "invalid bits set in bit enum");
-  // 所有位都未设置的特殊情况。
+  // Special case for all bits unset.
   if (val == 0) return "None";
   llvm::SmallVector<llvm::StringRef, 2> strs;
   if (1u == (1u & val)) { strs.push_back("tagged"); }
@@ -1182,7 +1216,7 @@ std::string stringifyMyBitEnum(MyBitEnum symbol) {
 }
 
 std::optional<MyBitEnum> symbolizeMyBitEnum(llvm::StringRef str) {
-  // 所有位都未设置的特殊情况。
+  // Special case for all bits unset.
   if (str == "None") return MyBitEnum::None;
 
   llvm::SmallVector<llvm::StringRef, 2> symbols;
@@ -1202,7 +1236,7 @@ std::optional<MyBitEnum> symbolizeMyBitEnum(llvm::StringRef str) {
 }
 
 std::optional<MyBitEnum> symbolizeMyBitEnum(uint32_t value) {
-  // 所有位都未设置的特殊情况。
+  // Special case for all bits unset.
   if (value == 0) return MyBitEnum::None;
 
   if (value & ~static_cast<uint32_t>(15u)) return std::nullopt;
@@ -1214,7 +1248,7 @@ std::optional<MyBitEnum> symbolizeMyBitEnum(uint32_t value) {
 
 ### 运行`mlir-tblgen`查看生成的内容
 
-TableGen 语法有时很晦涩；阅读生成的内容有助于理解和调试问题。要构建 `mlir-tblgen`，请在构建目录中运行 `cmake --build . --target mlir-tblgen` ，并在`bin/`子目录中找到 `mlir-tblgen` 二进制文件。所有支持的生成器都可以通过 `mlir-tblgen --help` 找到。例如，`--gen-op-decls` 和 `--gen-op-defs`，正如[生成的 C++ 代码](https://mlir.llvm.org/docs/DefiningDialects/Operations/#generated-c-code)部分所述。
+TableGen 语法有时很晦涩；阅读生成的内容有助于理解和调试问题。要构建 `mlir-tblgen`，请在构建目录中运行 `cmake --build . --target mlir-tblgen` ，并在`bin/`子目录中找到 `mlir-tblgen` 二进制文件。所有支持的生成器都可以通过 `mlir-tblgen --help` 找到。例如，`--gen-op-decls` 和 `--gen-op-defs`，正如[生成的 C++ 代码](#生成的C++代码)部分所述。
 
 要查看生成的代码，请通过 `-I` 提供包含路径，使用特定生成器调用 `mlir-tblgen`。例如：
 
@@ -1285,7 +1319,7 @@ def MyOp : Op<MyDialect, "my.op">, CppDeprecated<"use 'your.op' instead">;
 
 - 操作的特征（如可交换）与注册表中的操作一起建模。
 
-- 操作的操作数/返回类型约束与注册表中的操作一起建模（见下文[形状推理](https://mlir.llvm.org/docs/ShapeInference/)讨论），这允许（例如）在文本转储中优化简洁的语法。
+- 操作的操作数/返回类型约束与注册表中的操作一起建模（见下文[形状推断](../Shape Inference.md)讨论），这允许（例如）在文本转储中优化简洁的语法。
 
 - 操作的行为与带有摘要和描述的操作一起记录下来。描述用 markdown 写成，并且会被提取出来，以便包含在生成的方言的语言参考部分中。
 
@@ -1295,7 +1329,7 @@ def MyOp : Op<MyDialect, "my.op">, CppDeprecated<"use 'your.op' instead">;
 
 - 匹配模式与操作描述分开指定。
 
-  - 与 LLVM 不同的是，并不存在每个后端都需要了解的 “基本 ”操作集。相反，有许多不同的方言，这些方言之间的转换/合法化形成了一个转换图。
+  - 与 LLVM 不同的是，并不存在每个后端都需要了解的 “基本 ”操作集。相反，有许多不同的方言，这些方言之间的变换/合法化形成了一个变换图。
 
 - 参考实现可与操作定义一起提供。
 

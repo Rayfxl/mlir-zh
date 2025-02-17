@@ -1,24 +1,44 @@
 # 定义方言中的属性和类型
 
-本文档介绍如何定义方言中的[属性](https://mlir.llvm.org/docs/LangRef/#attributes)和[类型](https://mlir.llvm.org/docs/LangRef/#type-system)。
+本文档介绍如何定义方言中的[属性](../MLIR Language Reference.md#属性)和[类型](../MLIR Language Reference.md#类型系统)。
+
+- [语言参考回顾](#语言参考回顾)
+  - [属性](#属性)
+  - [类型](#类型)
+- [属性和类型](#属性和类型)
+  - [添加新的属性或类型定义](#添加新的属性或类型定义)
+  - [类名](#类名)
+  - [CMake目标](#CMake目标)
+  - [文档](#文档)
+  - [助记符](#助记符)
+  - [参数](#参数)
+  - [特征](#特征)
+  - [接口](#接口)
+  - [构建器](#构建器)
+  - [解析和输出](#解析和输出)
+  - [验证](#验证)
+  - [存储类](#存储类)
+  - [可变属性和类型](#可变属性和类型)
+  - [额外声明](#额外声明)
+  - [注册到方言](#注册到方言)
 
 ## 语言参考回顾
 
-在深入研究如何定义这些结构之前，先来快速回顾一下MLIR语言参考。
+在深入研究如何定义这些结构之前，先来快速回顾一下[MLIR语言参考](../MLIR Language Reference.md)。
 
 ### 属性
 
-属性是一种机制，用于在不允许使用变量的地方为操作指定常量数据，例如[`arith.cmpi` 操作](https://mlir.llvm.org/docs/Dialects/ArithOps/#arithcmpi-arithcmpiop)的比较谓词，或 [`arith.constant` 操作](https://mlir.llvm.org/docs/Dialects/ArithOps/#arithconstant-arithconstantop)的底层值。每个操作都有一个属性字典，该字典将一组属性名称与属性值关联起来。
+属性是一种机制，用于在不允许使用变量的地方为操作指定常量数据，例如[`arith.cmpi` 操作](../Dialects/'arith' Dialect.md#`arith.cmpi` (arith::CmpIOp))的比较谓词，或 [`arith.constant` 操作](../Dialects/'arith' Dialect.md#`arith.constant` (arith::ConstantOp))的底层值。每个操作都有一个属性字典，该字典将一组属性名称与属性值关联起来。
 
 ### 类型
 
-MLIR 中的每个 SSA 值（如操作结果或块参数）都有一个由类型系统定义的类型。MLIR 有一个开放的类型系统，没有固定的类型列表，对它们所代表的抽象也没有限制。例如，请看下面的 [Arithmetic AddI 操作](https://mlir.llvm.org/docs/Dialects/ArithOps/#arithaddi-arithaddiop)：
+MLIR 中的每个 SSA 值（如操作结果或块参数）都有一个由类型系统定义的类型。MLIR 有一个开放的类型系统，没有固定的类型列表，对它们所代表的抽象也没有限制。例如，请看下面的 [Arithmetic AddI 操作](../Dialects/'arith' Dialect.md##`arith.addi` (arith::AddIOp))：
 
 ```mlir
   %result = arith.addi %lhs, %rhs : i64
 ```
 
-它接收两个输入 SSA 值（`%lhs` 和 `%rhs`），并返回一个 SSA 值（`%result`）。此操作的输入和输出都是 `i64`类型，它是[内置整数类型](https://mlir.llvm.org/docs/Dialects/Builtin/#integertype)的一个实例。
+它接收两个输入 SSA 值（`%lhs` 和 `%rhs`），并返回一个 SSA 值（`%result`）。此操作的输入和输出都是 `i64`类型，它是[内置整数类型](../Dialects/Builtin Dialect.md#IntegerType)的一个实例。
 
 ## 属性和类型
 
@@ -34,7 +54,7 @@ MLIR 中的 C++ 属性和类型类（就像操作和许多其他东西一样）�
 
 开始定义新属性或新类型时，只需相应地为`AttrDef`或`TypeDef`类添加一个特化版本即可。类的实例对应于唯一的属性或类型类。
 
-下面是属性和类型定义的示例。我们通常建议在不同的 `.td` 文件中定义属性类和类型类，以便更好地封装不同的构件，并在它们之间定义适当的分层。这一建议适用于所有的 MLIR 结构，包括 [接口](https://mlir.llvm.org/docs/Interfaces/)、操作等。
+下面是属性和类型定义的示例。我们通常建议在不同的 `.td` 文件中定义属性类和类型类，以便更好地封装不同的构件，并在它们之间定义适当的分层。这一建议适用于所有的 MLIR 结构，包括[接口](../Interfaces.md)、操作等。
 
 ```tablegen
 // 包括定义类型所需的 tablegen 结构的定义。
@@ -53,15 +73,15 @@ def My_IntegerType : MyDialect_Type<"Integer", "int"> {
   let description = [{
     Integer types have a designated bit width.
   }];
-  // 这里我们为类型定义了一个参数，即位宽。
+  /// 这里我们为类型定义了一个参数，即位宽。
   let parameters = (ins "unsigned":$width);
 
-  // 这里我们为类型的文本格式进行了声明式定义，这将自动生成解析器和打印输出器的逻辑。
-  // 这样就可以将该类型的实例输出为如下形式：
-  //    !my.int<10> // 一个 10 位整数。
+  /// 这里我们为类型的文本格式进行了声明式定义，这将自动生成解析器和打印输出器的逻辑。
+  /// 这样就可以将该类型的实例输出为如下形式：
+  ///    !my.int<10> // 一个 10 位整数。
   let assemblyFormat = "`<` $width `>`";
 
-  // 表示我们的类型将为参数添加额外的验证。
+  /// 表示我们的类型将为参数添加额外的验证。
   let genVerifyDecl = 1;
 }
 ```
@@ -86,12 +106,12 @@ def My_IntegerAttr : MyDialect_Attr<"Integer", "int"> {
     An integer attribute is a literal attribute that represents an integral
     value of the specified integer type.
   }];
-  // 这里我们定义了两个参数，一个是 “self ”类型参数，另一个是属性的整数值。
-  // self类型参数由装配格式特殊处理。
+  /// 这里我们定义了两个参数，一个是 “self ”类型参数，另一个是属性的整数值。
+  /// self类型参数由装配格式特殊处理。
   let parameters = (ins AttributeSelfTypeParameter<"">:$type, "APInt":$value);
 
-  // 在这里，我们为类型定义了一个自定义构建器，无需传递 MLIRContext 实例；
-  // 因为它可以从 `type` 中推断出来。
+  /// 在这里，我们为类型定义了一个自定义构建器，无需传递 MLIRContext 实例；
+  /// 因为它可以从 `type` 中推断出来。
   let builders = [
     AttrBuilderWithInferredContext<(ins "Type":$type,
                                         "const APInt &":$value), [{
@@ -99,24 +119,24 @@ def My_IntegerAttr : MyDialect_Attr<"Integer", "int"> {
     }]>
   ];
 
-  // 在这里，我们为属性的文本格式进行了声明式定义，这将自动生成解析器和打印输出器的逻辑。
-  // 例如，这将允许属性实例以下列方式输出：
-  //    #my.int<50> : !my.int<32> // 一个值为 50 的 32 位整数。
-  // 注意，self 类型参数不包含在装配格式中。
-  // 其值来自所有属性的可选尾部类型。
+  /// 在这里，我们为属性的文本格式进行了声明式定义，这将自动生成解析器和打印输出器的逻辑。
+  /// 例如，这将允许属性实例以下列方式输出：
+  ///    #my.int<50> : !my.int<32> // 一个值为 50 的 32 位整数。
+  /// 注意，self 类型参数不包含在装配格式中。
+  /// 其值来自所有属性的可选尾部类型。
   let assemblyFormat = "`<` $value `>`";
 
-  // 表示我们的属性将为参数添加额外的验证。
+  /// 表示我们的属性将为参数添加额外的验证。
   let genVerifyDecl = 1;
 
-  // 向 ODS 生成器表明，我们不需要默认的构建器，因为我们已经定义了自己的更简单的构建器。
+  /// 向 ODS 生成器表明，我们不需要默认的构建器，因为我们已经定义了自己的更简单的构建器。
   let skipDefaultBuilders = 1;
 }
 ```
 
 ### 类名
 
-对于属性和类型，生成的 C++ 类的名称默认分别为`<classParamName>Attr`或`<classParamName>Type`。在上面的示例中，这是提供给`MyDialect_Attr`和`MyDialect_Type`的命名模板参数。对于我们在上面添加的定义，我们将分别获得名为 `IntegerType` 和 `IntegerAttr` 的 C++ 类。这可以通过 `cppClassName` 字段显式重写。
+对于属性和类型，生成的 C++ 类的名称默认分别为`<classParamName>Attr`或`<classParamName>Type`。在上面的示例中，这是提供给`MyDialect_Attr`和`MyDialect_Type`的`name`模板参数。对于我们在上面添加的定义，我们将分别获得名为 `IntegerType` 和 `IntegerAttr` 的 C++ 类。这可以通过 `cppClassName` 字段显式重写。
 
 ### CMake目标
 
@@ -136,7 +156,7 @@ add_public_tablegen_target(<Your Dialect>AttrDefsIncGen)
 
 ### 文档
 
-`summary` 和 `description` 字段可以为属性或类型提供用户文档。`summary` 字段需要一个简单的单行字符串，而`description` 字段则用于更加详细的文档。这两个字段可用于生成方言的 markdown 文档，并供上游 [MLIR 方言](https://mlir.llvm.org/docs/Dialects/)使用。
+`summary` 和 `description` 字段可以为属性或类型提供用户文档。`summary` 字段需要一个简单的单行字符串，而`description` 字段则用于更加详细的文档。这两个字段可用于生成方言的 markdown 文档，并供上游 [MLIR 方言](../Dialects/Dialects.md)使用。
 
 ### 助记符
 
@@ -144,7 +164,7 @@ add_public_tablegen_target(<Your Dialect>AttrDefsIncGen)
 
 ### 参数
 
-`parameters` 字段是包含属性或类型参数的可变长度列表。如果未指定参数（默认情况），该类型将被视为单例类型（意味着只有一个可能的实例）。此列表中的参数采用以下格式：`“c++Type”：$paramName`。在上下文中构造存储实例时，需要分配的 C++ 类型的参数类型需要采取以下措施之一：
+`parameters` 字段是包含属性或类型参数的可变长度列表。如果未指定参数（默认情况），该类型将被视为单例类型（意味着只有一个可能的实例）。此列表中的参数采用以下格式：` "c++Type":$paramName`。在上下文中构造存储实例时，需要分配的 C++ 类型的参数类型需要采取以下措施之一：
 
 - 使用 `AttrParameter` 或 `TypeParameter` 类，而不是原始的“c++类型”的字符串。这允许在使用该参数时提供自定义分配代码。例如，`StringRefParameter`和`ArrayRefParameter`就是需要分配的常见参数类型。
 - 将 `genAccessors` 字段设为 1（默认值），以便为每个参数生成访问器方法（例如，上述类型示例中的 `int getWidth() const`）。
@@ -169,8 +189,7 @@ def ArrayRefIntParam : TypeParameter<"::llvm::ArrayRef<int>", "Array of int"> {
   let allocator = "$_dst = $_allocator.copyInto($_self);";
 }
 
-// 然后就可以这样使用参数了：
-
+The parameter can then be used as so:
 
 ...
 let parameters = (ins ArrayRefIntParam:$dims);
@@ -199,11 +218,11 @@ MLIR 包括几个针对常见情况的专用类：
 
 ### 特征
 
-与操作类似，属性和类型类也可以附加`Traits`，以提供额外的混合方法和其他数据。特征可以通过尾部的模板参数附加，即上例中的特征列表参数。有关定义和使用特征的更多信息，请参阅主[`Trait`](https://mlir.llvm.org/docs/Traits/)文档。
+与操作类似，属性和类型类也可以附加`Traits`，以提供额外的混合方法和其他数据。`Trait`可以通过尾部的模板参数附加，即上例中的 `traits` 列表参数。有关定义和使用特征的更多信息，请参阅主[`Trait`](../Traits/Traits.md)文档。
 
 ### 接口
 
-属性和类型类可以附加`Interfaces`，为属性或类型提供虚拟接口。接口的添加方式与[特征](https://mlir.llvm.org/docs/DefiningDialects/AttributesAndTypes/#Traits)相同，即使用`AttrDef` 或 `TypeDef` 的特征列表模板参数。有关定义和使用接口的更多信息，请参阅主[`接口`](https://mlir.llvm.org/docs/Interfaces/)文档。
+属性和类型类可以附加`Interfaces`，为属性或类型提供虚拟接口。`Interfaces`的添加方式与[特征](#特征)相同，即使用`AttrDef` 或 `TypeDef` 的 `traits` 列表模板参数。有关定义和使用接口的更多信息，请参阅主[`接口`](../Interfaces.md)文档。
 
 ### 构建器
 
@@ -241,11 +260,12 @@ def MyType : ... {
     TypeBuilder<(ins "int":$intParam)>,
     TypeBuilder<(ins CArg<"int", "0">:$intParam)>,
     TypeBuilder<(ins CArg<"int", "0">:$intParam), [{
-      // 在此处内联写`get`构建器的主体。
+      // Write the body of the `get` builder inline here.
       return Base::get($_ctxt, intParam);
     }]>,
     TypeBuilderWithInferredContext<(ins "Type":$typeParam), [{
-      // 该构建器表明，它可以从其参数中推断出一个 MLIRContext 实例。
+      // This builder states that it can infer an MLIRContext instance from
+      // its arguments.
       return Base::get(typeParam.getContext(), ...);
     }]>,
     TypeBuilder<(ins "int":$intParam), [{}], "IntegerType">,
@@ -253,7 +273,7 @@ def MyType : ... {
 }
 ```
 
-在这个示例中，我们提供了几种不同的简便构建器，它们在不同场景中都很有用。`ins` 前缀在 ODS 中的许多函数声明中都会见到，这些声明使用 TableGen [`dag`](https://mlir.llvm.org/docs/DefiningDialects/AttributesAndTypes/#tablegen-syntax)。这个前缀的后面是一个以逗号分隔的类型列表（带引号的字符串或 `CArg`）和以 `$` 符号为前缀的名称。使用 `CArg` 可以为参数提供默认值。让我们分别看看这些构建器。
+在这个示例中，我们提供了几种不同的简便构建器，它们在不同场景中都很有用。`ins` 前缀在 ODS 中的许多函数声明中都会见到，这些声明使用 TableGen [`dag`](#tablegen-syntax)。这个前缀的后面是一个以逗号分隔的类型列表（带引号的字符串或 `CArg`）和以 `$` 符号为前缀的名称。使用 `CArg` 可以为参数提供默认值。让我们分别看看这些构建器。
 
 第一种构建器将生成一个构建方法的声明，如下所示：
 
@@ -294,7 +314,7 @@ class MyType : /*...*/ {
 ```tablegen
   let builders = [
     TypeBuilder<(ins CArg<"int", "0">:$intParam), [{
-      // 在此处内联写 `get` 构建器的主体。
+      // Write the body of the `get` builder inline here.
       return Base::get($_ctxt, intParam);
     }]>,
   ];
@@ -307,7 +327,7 @@ class MyType : /*...*/ {
 };
 
 MyType MyType::get(::mlir::MLIRContext *context, int intParam) {
-  // 在此处内联写 `get` 构建器的主体。
+  // Write the body of the `get` builder inline here.
   return Base::get(context, intParam);
 }
 ```
@@ -319,7 +339,8 @@ MyType MyType::get(::mlir::MLIRContext *context, int intParam) {
 ```tablegen
   let builders = [
     TypeBuilderWithInferredContext<(ins "Type":$typeParam), [{
-      // 此构建器表明它可以从其参数中推断出一个 MLIRContext 实例。
+      // This builder states that it can infer an MLIRContext instance from
+      // its arguments.
       return Base::get(typeParam.getContext(), ...);
     }]>,
   ];
@@ -332,7 +353,8 @@ class MyType : /*...*/ {
 };
 
 MyType MyType::get(Type typeParam) {
-  // 此构建器表明它可以从其参数中推断出一个 MLIRContext 实例。
+  // This builder states that it can infer an MLIRContext instance from its
+  // arguments.
   return Base::get(typeParam.getContext(), ...);
 }
 ```
@@ -398,15 +420,17 @@ static LogicalResult generatedTypePrinter(Type type, DialectAsmPrinter& printer)
 - 指令是一个关键字，后跟一个可选参数列表，用于定义特殊的解析器和打印输出器行为。
 
 ```tablegen
-// 一个具有装配格式的示例类型。
+// An example type with an assembly format.
 def MyType : TypeDef<My_Dialect, "MyType"> {
-  // 定义一个助记符，允许方言的解析器钩子调用生成的解析器。
+  // Define a mnemonic to allow the dialect's parser hook to call into the
+  // generated parser.
   let mnemonic = "my_type";
 
-  // 定义两个参数，其 C++ 类型用字符串字面量表示。
+  // Define two parameters whose C++ types are indicated in string literals.
   let parameters = (ins "int":$count, "AffineMap":$map);
 
-  // 定义装配格式。用较少的 `<` 和较多的 `>` 包围格式，以便 MLIR 的打印输出器使用漂亮的格式。
+  // Define the assembly format. Surround the format with less `<` and greater
+  // `>` so that MLIR's printer uses the pretty format.
   let assemblyFormat = "`<` $count `,` `map` `=` $map `>`";
 }
 ```
@@ -479,7 +503,7 @@ def MyParameter : TypeParameter<"std::pair<int, int>", "pair of ints"> {
 
 使用 `OptionalParameter` 时，默认值将设置为 C++ 存储类型的 C++ 默认构造值。例如，`Optional<int>` 将设置为 `std::nullopt`，`Attribute` 将设置为 `nullptr`。通过将这些参数与它们的 “空 ”值进行比较来测试它们是否存在。
 
-可选组是一组元素，可根据锚点的存在选择性地打印输出。只有可选参数或只能捕获可选参数的指令才能在可选组中使用。如果存在锚点，则打印输出锚点所在的组，否则打印其他组。如果使用捕获一个以上可选参数的指令作为锚点，那么如果捕获的参数中有任何一个出现，就会打印输出可选组。例如，自定义指令只有在捕获至少一个可选参数时才能用作可选组锚点。
+可选组是一组元素，可根据锚点的存在选择性地打印输出。只有可选参数或只能捕获可选参数的指令才能在可选组中使用。如果存在锚点，则打印输出锚点所在的组，否则打印其他组。如果使用捕获一个以上可选参数的指令作为锚点，那么如果捕获的参数中有任何一个出现，就会打印输出可选组。例如，`custom` 指令只有在捕获至少一个可选参数时才能用作可选组锚点。
 
 假设参数 `a` 是一个 `IntegerAttr` 。
 
@@ -534,7 +558,7 @@ dialect-attribute  ::= `#` dialect-namespace `<` attr-data `>`
 然而，为了让 MLIR 打印输出类型，该属性必须实现 `TypedAttrInterface`。例如，
 
 ```tablegen
-// 该属性只有一个self类型参数。
+// This attribute has only a self type parameter.
 def MyExternAttr : AttrDef<MyDialect, "MyExtern", [TypedAttrInterface]> {
   let parameters = (AttributeSelfTypeParameter<"">:$type);
   let mnemonic = "extern";
@@ -701,7 +725,7 @@ let assemblyFormat = [{ custom<Bar>($foo, "1") }];
 
 - `AttrOrType getChecked(function_ref<InFlightDiagnostic()> emitError, parameters...)`
 
-正如 [Builders](https://mlir.llvm.org/docs/DefiningDialects/AttributesAndTypes/#Builders) 部分所述，这些方法是 `get` 构建器失败时的配套方法。如果调用这些方法时 `verify` 调用失败，它们将返回 nullptr 而不是出现断言错误。
+正如 [Builders](#构建器) 部分所述，这些方法是 `get` 构建器失败时的配套方法。如果调用这些方法时 `verify` 调用失败，它们将返回 nullptr 而不是出现断言错误。
 
 ### 存储类
 
@@ -729,43 +753,43 @@ let assemblyFormat = [{ custom<Bar>($foo, "1") }];
 让我们来看一个例子：
 
 ```c++
-// 在这里，我们定义了一个 ComplexType 的存储类，它可以保存一个非零整数和一个整数类型。
+/// 在这里，我们定义了一个 ComplexType 的存储类，它可以保存一个非零整数和一个整数类型。
 struct ComplexTypeStorage : public TypeStorage {
   ComplexTypeStorage(unsigned nonZeroParam, Type integerType)
       : nonZeroParam(nonZeroParam), integerType(integerType) {}
 
-  // 该存储的哈希键是一个整数和类型参数的对组。
+  /// 该存储的哈希键是一个整数和类型参数的对组。
   using KeyTy = std::pair<unsigned, Type>;
 
-  // 为键类型定义比较函数。
+  /// 为键类型定义比较函数。
   bool operator==(const KeyTy &key) const {
     return key == KeyTy(nonZeroParam, integerType);
   }
 
-  // 为键类型定义哈希函数。
-  // 注意：这不是必须的，因为 std::pair、unsigned 和 Type 都已经有可用的哈希函数。
+  /// 为键类型定义哈希函数。
+  /// 注意：这不是必须的，因为 std::pair、unsigned 和 Type 都已经有可用的哈希函数。
   static llvm::hash_code hashKey(const KeyTy &key) {
     return llvm::hash_combine(key.first, key.second);
   }
 
-  // 为键类型定义一个构造函数。
-  // 注意：这不是必须的，因为 KeyTy 可以用给定的参数直接构造。
+  /// 为键类型定义一个构造函数。
+  /// 注意：这不是必须的，因为 KeyTy 可以用给定的参数直接构造。
   static KeyTy getKey(unsigned nonZeroParam, Type integerType) {
     return KeyTy(nonZeroParam, integerType);
   }
 
-  // 定义一个构造方法，用于创建该存储的新实例。
+  /// 定义一个构造方法，用于创建该存储的新实例。
   static ComplexTypeStorage *construct(StorageAllocator &allocator, const KeyTy &key) {
     return new (allocator.allocate<ComplexTypeStorage>())
         ComplexTypeStorage(key.first, key.second);
   }
 
-  // 从该存储类中构造键的实例。
+  /// 从该存储类中构造键的实例。
   KeyTy getAsKey() const {
     return KeyTy(nonZeroParam, integerType);
   }
 
-  // 存储类保存的参数数据。
+  /// 存储类保存的参数数据。
   unsigned nonZeroParam;
   Type integerType;
 };
@@ -790,18 +814,19 @@ TODO：属性和类型的声明式规范目前不支持可变参数，因此需�
 让我们为递归类型定义一个简单的存储类，其中类型由它的名称标识，并且可能包含包括自身在内的另一个类型。
 
 ```c++
-// 在这里，我们为递归类型定义一个存储类，递归类型由其名称标识，并包含另一个类型。
+/// 在这里，我们为递归类型定义一个存储类，递归类型由其名称标识，并包含另一个类型。
 struct RecursiveTypeStorage : public TypeStorage {
-  // 类型由其名称唯一标识。请注意，包含的类型不是键的一部分。
+  /// 类型由其名称唯一标识。请注意，包含的类型不是键的一部分。
   using KeyTy = StringRef;
 
-  // 根据类型名称构造存储类。显式地将 containedType 初始化为 nullptr，作为尚未初始化的可变成分的标记。
+  /// 根据类型名称构造存储类。
+  /// 显式地将 containedType 初始化为 nullptr，作为尚未初始化的可变成分的标记。
   RecursiveTypeStorage(StringRef name) : name(name), containedType(nullptr) {}
 
-  // 定义比较函数。
+  /// 定义比较函数。
   bool operator==(const KeyTy &key) const { return key == name; }
 
-  // 定义创建存储类新实例的构造方法。
+  /// 定义创建存储类新实例的构造方法。
   static RecursiveTypeStorage *construct(StorageAllocator &allocator,
                                          const KeyTy &key) {
     // 注意，键字符串会被复制到分配器中，以确保它与存储本身一样保持有效。
@@ -809,7 +834,8 @@ struct RecursiveTypeStorage : public TypeStorage {
         RecursiveTypeStorage(allocator.copyInto(key));
   }
 
-  // 定义一个修改方法，用于在创建后更改类型。在许多情况下，我们只想设置一次可变成分，并拒绝任何进一步的修改，这可以通过从该函数返回失败来实现。
+  /// 定义一个修改方法，用于在创建后更改类型。
+  /// 许多情况下，我们只想设置一次可变成分，并拒绝任何进一步的修改，这可通过从该函数返回失败来实现。
   LogicalResult mutate(StorageAllocator &, Type body) {
     // 如果包含的类型已被初始化，而调用试图更改它，则拒绝更改。
     if (containedType && containedType != body)
@@ -833,16 +859,16 @@ struct RecursiveTypeStorage : public TypeStorage {
 class RecursiveType : public Type::TypeBase<RecursiveType, Type,
                                             RecursiveTypeStorage> {
 public:
-  // 继承父构造函数。
+  /// 继承父构造函数。
   using Base::Base;
 
-  // 创建递归类型的实例。它只接收类型名，并返回未初始化的类型体。
+  /// 创建递归类型的实例。它只接收类型名，并返回未初始化的类型体。
   static RecursiveType get(MLIRContext *ctx, StringRef name) {
     // 调用基类以获取该类型的唯一实例。参数（name）在上下文之后传递。
     return Base::get(ctx, name);
   }
 
-  // 现在我们可以更改该类型的可变成分。这是一个实例方法，可在已存在的 RecursiveType 上调用。
+  /// 现在我们可以更改该类型的可变成分。这是一个实例方法，可在已存在的 RecursiveType 上调用。
   void setBody(Type body) {
     // 调用基类方法来更改类型。
     LogicalResult result = Base::mutate(body);
@@ -855,10 +881,10 @@ public:
     (void) result;
   }
 
-  // 返回包含的类型，如果尚未初始化，则可能为空。
+  /// 返回包含的类型，如果尚未初始化，则可能为空。
   Type getBody() { return getImpl()->containedType; }
 
-  // 返回名称。
+  /// 返回名称。
   StringRef getName() { return getImpl()->name; }
 };
 ```
@@ -871,17 +897,17 @@ public:
 
 ### 注册到方言
 
-一旦定义了属性和类型，就必须将它们注册到父方言中。注册可通过 `addAttributes` 和 `addTypes` 方法完成。请注意，注册时，存储类的完整定义必须可见。
+一旦定义了属性和类型，就必须将它们注册到父 `Dialect`中。注册可通过 `addAttributes` 和 `addTypes` 方法完成。请注意，注册时，存储类的完整定义必须可见。
 
 ```c++
 void MyDialect::initialize() {
-    // 将定义的属性添加到方言中。
+    /// 将定义的属性添加到方言中。
   addAttributes<
 #define GET_ATTRDEF_LIST
 #include "MyDialect/Attributes.cpp.inc"
   >();
 
-    // 将定义的类型添加到方言中。
+    /// 将定义的类型添加到方言中。
   addTypes<
 #define GET_TYPEDEF_LIST
 #include "MyDialect/Types.cpp.inc"
