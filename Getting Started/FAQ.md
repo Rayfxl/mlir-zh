@@ -33,7 +33,7 @@ BibTeX 条目如下。
 
 ## 张量和向量类型有什么区别？
 
-1. 概念上的：向量旨在并出现在较低级别的方言中，通常是你期望硬件拥有这种大小的寄存器的地方。张量则是更高层次的“更接近源代码”的抽象表示。这种区别也反映在[`vector` dialect](../Code Documentation/Dialects/'vector' Dialect.md)中的操作所建模的抽象中，而张量则更自然地出现在[`linalg` dialect](../Code Documentation/Dialects/'linalg' Dialect/'linalg' Dialect.md)的操作中。
+1. 概念上的：向量旨在并出现在较低级别的方言中，通常是你期望硬件拥有这种大小的寄存器的地方。张量则是更高层次的“更接近源代码”的抽象表示。这种区别也反映在[`vector` dialect](../Code%20Documentation/Dialects/'vector'%20Dialect.md)中的操作所建模的抽象中，而张量则更自然地出现在[`linalg` dialect](../Code%20Documentation/Dialects/'linalg'%20Dialect/'linalg'%20Dialect.md)的操作中。
 2. 张量可以是动态形状的、无阶的或 0 维的；而向量则不能。
 3. 你可以拥有一个包含向量的 memref（内存中的缓冲区），但你不能拥有一个张量类型的 memref。
 4. 允许使用的元素类型集也不同：张量类型没有限制，而向量仅限于浮点型和整型。
@@ -43,7 +43,7 @@ BibTeX 条目如下。
 
 在创建操作、类型或属性之前，相关的方言必须已经加载到`MLIRContext`中。例如，Toy 教程在从 AST 产生 Toy IR 之前显式加载了 Toy Dialect。
 
-在上下文中加载 Dialect 的过程不是线程安全的，这就要求在多线程pass管理器开始执行之前加载所有相关的 Dialect。为了保持系统的模块化和分层，调用pass管道时绝不要显式预加载方言。要做到这一点，需要每个pass声明一个依赖方言列表：这些方言是pass可以为其创建实体（操作、类型或属性）的方言，输入中已经存在的方言除外。例如，`convertLinalgToLoops`pass会将`SCF`方言声明为依赖方言，但无需声明`Linalg`。另请参阅pass基础设施文档中的[依赖方言](../Code Documentation/Pass Infrastructure.md#依赖方言)。
+在上下文中加载 Dialect 的过程不是线程安全的，这就要求在多线程pass管理器开始执行之前加载所有相关的 Dialect。为了保持系统的模块化和分层，调用pass管道时绝不要显式预加载方言。要做到这一点，需要每个pass声明一个依赖方言列表：这些方言是pass可以为其创建实体（操作、类型或属性）的方言，输入中已经存在的方言除外。例如，`convertLinalgToLoops`pass会将`SCF`方言声明为依赖方言，但无需声明`Linalg`。另请参阅pass基础设施文档中的[依赖方言](../Code%20Documentation/Pass%20Infrastructure.md#依赖方言)。
 
 最后，方言可以在上下文中注册。注册的唯一目的是让 `mlir-opt` 或 `mlir-translate` 等工具所使用的文本解析器可以使用这些方言。编译器前端以编程方式产生 IR 并调用pass管道，永远不需要注册任何方言。
 
@@ -72,7 +72,7 @@ Attribute getConstantAttr(Operation *constantOp) {
 
 ## 特征和接口之间有什么区别？
 
-[特征](../Code Documentation/Traits/Traits.md)和[接口](../Code Documentation/Interfaces.md)都可以用来向操作、类型和属性注入共同的行为，而不会引入重复。然而，从概念上讲，它们是完全不同的。
+[特征](../Code%20Documentation/Traits/Traits.md)和[接口](../Code%20Documentation/Interfaces.md)都可以用来向操作、类型和属性注入共同的行为，而不会引入重复。然而，从概念上讲，它们是完全不同的。
 
 特征是向操作/类型/属性注入静态行为，而接口是根据运行时类型动态调度行为。例如，由于 [`ModuleOp`](https://github.com/llvm/llvm-project/blob/f3e1f44340dc26e3810d601edf0e052813b7a11c/mlir/include/mlir/IR/BuiltinOps.td#L167)  实现了 [`SymbolTable`](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/SymbolTable.h#L338) 特征，因此`mlir::ModuleOp` 将 `lookupSymbol` 作为成员函数公开。然而，没有一种类型擦除的方式来访问这种功能，它只能通过 `mlir::ModuleOp` 来使用。另一方面，如果一个操作实现了 [`CallOpInterface`](https://github.com/llvm/llvm-project/blob/902184e6cc263e4c66440c95a21665b6fdffe57c/mlir/include/mlir/Interfaces/CallInterfaces.td#L25)，那么它的 `getCallableForCallee` 的实现就可以通过`dyn_cast` 把该操作转为 `CallOpInterface` 来以类型擦除的方式调用。调用者不需要知道操作的具体类型就能调用该方法。
 
@@ -84,15 +84,15 @@ Attribute getConstantAttr(Operation *constantOp) {
 
 不过，我们可以定义从 `memref` 中创建类似指针类型的操作，以及相反地，也可以定义从结合附加信息的指针中创建 `memref` 的操作。在实现这些操作之前，建议方言作者仔细考虑这些操作对所产生的 IR 的别名特性的影响。
 
-与 C 语言的互操作性经常被用来鼓励从 `memref` 到指针的不透明转换。[LLVM IR 目标](../Code Documentation/LLVM IR Target.md#有阶MemRef类型)提供了一个与 C 兼容的接口，适用于具有[strided 布局](../Code Documentation/Dialects/Builtin Dialect.md#strided-memref)的定义明确的 `memrefs` 子集。在函数边界处，它甚至为将 memref 作为[裸指针](../Code Documentation/LLVM IR Target.md#有阶MemRef的裸指针调用约定)传递提供了最低限度支持，前提是它们的大小是静态已知的，并且其布局是简单的标识。
+与 C 语言的互操作性经常被用来鼓励从 `memref` 到指针的不透明转换。[LLVM IR 目标](../Code%20Documentation/LLVM%20IR%20Target.md#有阶MemRef类型)提供了一个与 C 兼容的接口，适用于具有[strided 布局](../Code%20Documentation/Dialects/Builtin%20Dialect.md#strided-memref)的定义明确的 `memrefs` 子集。在函数边界处，它甚至为将 memref 作为[裸指针](../Code%20Documentation/LLVM%20IR%20Target.md#有阶MemRef的裸指针调用约定)传递提供了最低限度支持，前提是它们的大小是静态已知的，并且其布局是简单的标识。
 
 ## “op symbol declaration cannot have public visibility”是怎么回事？
 
-一个常见的错误是试图提供一个函数声明（即一个没有函数体的函数），但却让它为“public”。在 MLIR 符号系统中，声明必须是私有的，只有定义可以是公开的。请参见[符号可见性](../Code Documentation/Symbols and Symbol Tables.md#符号可见性)文档。
+一个常见的错误是试图提供一个函数声明（即一个没有函数体的函数），但却让它为“public”。在 MLIR 符号系统中，声明必须是私有的，只有定义可以是公开的。请参见[符号可见性](../Code%20Documentation/Symbols%20and%20Symbol%20Tables.md#符号可见性)文档。
 
 ## 我对`getUsers()`和`getUses()`的迭代感到困惑：两者有什么区别？
 
-一个SSA 值的“使用者”是`Operation`的实例，而“使用”是指这些操作的操作数。例如，考虑 `test.op(%0, %0) : ...`，当遍历 `%0` 的“使用”时，您将看到两个 `OpOperand` 实例（`test.op` 中的每个操作数对应一次使用），而遍历 `%0` 的“使用者”时，将直接得到与 `test.op` 对应的两个 `Operation *`。请注意，您会看到两次 `test.op`，因为它两次都是 `%0` 的使用者。[关于 use-def 链的教程](../Code Documentation/Tutorials/Understanding the IR Structure.md#遍历 def-use 链)可能也有助于理解其中的细节。
+一个SSA 值的“使用者”是`Operation`的实例，而“使用”是指这些操作的操作数。例如，考虑 `test.op(%0, %0) : ...`，当遍历 `%0` 的“使用”时，您将看到两个 `OpOperand` 实例（`test.op` 中的每个操作数对应一次使用），而遍历 `%0` 的“使用者”时，将直接得到与 `test.op` 对应的两个 `Operation *`。请注意，您会看到两次 `test.op`，因为它两次都是 `%0` 的使用者。[关于 use-def 链的教程](../Code%20Documentation/Tutorials/Understanding%20the%20IR%20Structure.md#遍历%20def-use%20链)可能也有助于理解其中的细节。
 
 ## 如何通过编程获取 SSA 值 (`%foo`) 的“名称”？
 

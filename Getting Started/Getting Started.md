@@ -6,13 +6,13 @@
 
 以下有关编译和测试 MLIR 的说明假定您拥有 `git`、[`ninja`](https://ninja-build.org/)和有效的 C++ 工具链（请参阅 [LLVM 要求](https://llvm.org/docs/GettingStarted.html#requirements)）。
 
-作为入门，您可以试试为 Toy 语言构建编译器的[教程](../Code Documentation/Tutorials/Toy Tutorial/Chapter 1：Toy Language and AST.md)。
+作为入门，您可以试试为 Toy 语言构建编译器的[教程](../Code%20Documentation/Tutorials/Toy%20Tutorial/Chapter%201：Toy%20Language%20and%20AST.md)。
 
 ------
 
 **提示**
 
-有关调用和过滤测试的其他方法，请参阅 [测试指南 - CLI 语句](Testing Guide.md/#command-line-incantations) 部分，这些方法可以帮助你提高常规开发的效率。
+有关调用和过滤测试的其他方法，请参阅 [测试指南 - CLI 语句](Testing%20Guide.md#command-line-incantations) 部分，这些方法可以帮助你提高常规开发的效率。
 
 ------
 
@@ -62,20 +62,20 @@ cmake --build . --target tools/mlir/test/check-mlir
 
 ## 入门文档
 
-- [报告问题](Reporting Issues.md)
+- [报告问题](Reporting%20Issues.md)
 
-- [调试技巧](Debugging Tips.md)
+- [调试技巧](Debugging%20Tips.md)
 
 - [常见问题](FAQ.md)
 
-- [如何贡献](How to Contribute.md)
+- [如何贡献](How%20to%20Contribute.md)
 
-- [开发人员指南](Developer Guide.md)
+- [开发人员指南](Developer%20Guide.md)
 
-- [开放项目](Open Projects.md)
+- [开放项目](Open%20Projects.md)
 
 - [术语表](Glossary.md)
 
-- [测试指南](Testing Guide.md)
+- [测试指南](Testing%20Guide.md)
 
   

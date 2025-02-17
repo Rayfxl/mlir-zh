@@ -81,9 +81,9 @@ MLIR-DaCe 是一个旨在弥合以控制为中心的中间表示法和以数据�
 
 ## [MLIR-EmitC](https://github.com/iml130/mlir-emitc)
 
-MLIR-EmitC 提供了一种将 ML 模型翻译成 C++ 代码的方法。该代码仓库包含将 Keras 和 TensorFlow 模型翻译成 [TOSA](Code Documentation/Dialects/Tensor Operator Set Architecture(TOSA) Dialect.md) 和 [StableHLO](https://github.com/openxla/stablehlo/) 方言并将其转换为 [EmitC](Code Documentation/Dialects/'emitc' Dialect.md) 的脚本和工具。后者用于生成对参考实现的调用。
+MLIR-EmitC 提供了一种将 ML 模型翻译成 C++ 代码的方法。该代码仓库包含将 Keras 和 TensorFlow 模型翻译成 [TOSA](Code%20Documentation/Dialects/Tensor%20Operator%20Set%20Architecture(TOSA)%20Dialect.md) 和 [StableHLO](https://github.com/openxla/stablehlo/) 方言并将其转换为 [EmitC](Code%20Documentation/Dialects/'emitc'%20Dialect.md) 的脚本和工具。后者用于生成对参考实现的调用。
 
-[EmitC](Code Documentation/Dialects/'emitc' Dialect.md) 方言本身以及 C++ 生成器是 MLIR 核心的一部分，不再作为 MLIR-EmitC 仓库的一部分提供。
+[EmitC](Code%20Documentation/Dialects/'emitc'%20Dialect.md) 方言本身以及 C++ 生成器是 MLIR 核心的一部分，不再作为 MLIR-EmitC 仓库的一部分提供。
 
 ## [Mojo](https://docs.modular.com/mojo/)
 

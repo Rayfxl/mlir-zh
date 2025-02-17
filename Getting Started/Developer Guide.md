@@ -12,14 +12,14 @@ MLIR 遵循 [LLVM 风格](https://llvm.org/docs/CodingStandards.html) 指南。�
 
 - 除 IR 单元（Region、Block 和 Operation）外，不可为空的输出参数一般通过非 const 引用传递。
 
-- IR 结构不是为[常量正确性](../Code Documentation/Rationale/Usage of `const` in MLIR, for core IR types.md)而设计的。
+- IR 结构不是为[常量正确性](../Code%20Documentation/Rationale/Usage%20of%20`const`%20in%20MLIR,%20for%20core%20IR%20types.md)而设计的。
 
 - 如果递归无法静态界定，请勿使用递归算法：也就是说，如果存在可能触发堆栈溢出的 IR 输入（例如以递归方式遍历use-def链），请避免递归。目前，我们容忍以下两种情况：
 
   - IR 嵌套：在遍历嵌套区域时，我们使用递归。
   - 类型嵌套：递归可用于复合类型的嵌套。
   
-- [提交信息](How to Contribute.md)遵循 git 规范。
+- [提交信息](How%20to%20Contribute.md)遵循 git 规范。
 
 请使用根目录下的 `.clang-format` 配置文件在修改过的文件上运行 clang-format。有关将 clang-format 与开发环境集成的更多详情，请查阅 clang-format [文档](https://clang.llvm.org/docs/ClangFormat.html)。尤其是，如果 clang 已在整个系统中安装，运行 `git clang-format origin/main` 就会更新工作目录中的文件，使其具有相关的格式化修改；别忘了在提交时包含这些修改。
 
@@ -41,13 +41,13 @@ Passes应假定其输入的 IR 已通过验证。Passes不应检查由验证器�
 
 为避免不同方言提供的选项之间发生冲突，一般来说，命名约定是在每个特定方言的passes和选项前加上方言名称。特定pass的选项也应以pass名称为前缀。例如，仿射方言提供了一个循环平铺pass，在命令行中注册为`-affine-tile`，并带有一个平铺尺寸选项，可以用`-affine-tile-size`来设置。
 
-我们还避免使用`cl::opt`来提供pass选项，而是采用[pass 选项](../Code Documentation/Pass Infrastructure.md)机制。这允许在pass管道描述中序列化这些选项，还可以将不同的选项传递给同一管道中的多个pass实例。
+我们还避免使用`cl::opt`来提供pass选项，而是采用[pass 选项](../Code%20Documentation/Pass%20Infrastructure.md)机制。这允许在pass管道描述中序列化这些选项，还可以将不同的选项传递给同一管道中的多个pass实例。
 
 ## IR 验证器
 
 省流：只验证一个操作的局部层面信息，尤其是不要遵循def-use链（不要查看任何操作数的生产者或任何结果的使用者）。
 
-MLIR 鼓励在验证器中对操作强制执行不变量。在[ODS](../Code Documentation/Defining Dialects/Operation Definition Specification (ODS).md)中定义的操作通常会对其接受的操作数类型或操作数与结果之间的关系施加约束。例如，`arith`方言中的操作定义了`SameOperandsAndResultType`特征，它强制执行一个自描述的不变量。
+MLIR 鼓励在验证器中对操作强制执行不变量。在[ODS](../Code%20Documentation/Defining%20Dialects/Operation%20Definition%20Specification%20(ODS).md)中定义的操作通常会对其接受的操作数类型或操作数与结果之间的关系施加约束。例如，`arith`方言中的操作定义了`SameOperandsAndResultType`特征，它强制执行一个自描述的不变量。
 
 当不变量失效时，我们会将 IR 视为“无效”，并中止编译流程。按照约定，编译器中任何pass默认都假定其输入的 IR 是有效的，并且必须产生有效的输出。pass管理器的默认设置是在每个pass之间强制执行这一规则。由于当验证器失败时会终止整个流程，因此它们必须只对确定被破坏的不变量进行验证，而不是对“可能无效”的情况进行验证。
 
@@ -80,7 +80,7 @@ MLIR 鼓励在验证器中对操作强制执行不变量。在[ODS](../Code Docu
 
 ## 测试指南
 
-测试指南请参见[此处](Testing Guide.md)。
+测试指南请参见[此处](Testing%20Guide.md)。
 
 ## 贡献新方言（或重要组件）的指南
 
