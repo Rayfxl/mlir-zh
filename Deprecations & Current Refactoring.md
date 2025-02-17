@@ -38,7 +38,7 @@
 
 ### 弃用`gpu-to-(cubin|hsaco)`，改用 GPU 编译属性
 
-[GPU 编译属性](Code Documentation/Dialects/'gpu' Dialect.md#GPU 编译)是一种全新的机制，用于以可扩展的方式将 GPU 模块编译为二进制或其他格式。这种机制解除了目前 GPU 序列化passes的许多限制，例如之前只有在 CUDA 驱动程序存在或不链接到 LibDevice 的情况下才可用。
+[GPU 编译属性](Code%20Documentation/Dialects/'gpu'%20Dialect.md#GPU%20编译)是一种全新的机制，用于以可扩展的方式将 GPU 模块编译为二进制或其他格式。这种机制解除了目前 GPU 序列化passes的许多限制，例如之前只有在 CUDA 驱动程序存在或不链接到 LibDevice 的情况下才可用。
 
 一个关键区别是使用`ptxas`或`nvptxcompiler`库将 PTX 编译成二进制文件，因此为了生成二进制文件，需要安装CUDAToolkit。
 
@@ -61,8 +61,6 @@ LLVM 17 已停止正式支持类型化指针，而 MLIR 的 LLVM Dialect 现在�
 ## LLVM 20
 
 ### 移除`vector.reshape`
-
-This operation was added back in 2019, and since then, no lowerings or uses have been implemented in upstream MLIR or any known downstream projects. Due to this lack of use, it was decided that the operation should be removed.
 
 该操作是在 2019 年添加的，从那时起，上游 MLIR 或任何已知的下游项目中都没有实现过降级或使用。由于缺乏使用，因此决定删除该操作。
 

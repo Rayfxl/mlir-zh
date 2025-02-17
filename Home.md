@@ -30,7 +30,7 @@ MLIR 是一种混合 IR，可以在统一的基础架构中支持多种不同需
 - 代码生成“降级”变换，如 DMA 插入、显式高速缓存管理、内存平铺以及一维和二维寄存器架构的矢量化。
 - 能够表示特定目标的操作，如特定加速器的高级操作。
 - 在深度学习计算图上进行量化和其他图变换。
-- [多面体原语](Code Documentation/Dialects/'affine' Dialect.md)。
+- [多面体原语](Code%20Documentation/Dialects/'affine'%20Dialect.md)。
 - [HLS](https://circt.llvm.org/)。
 
 MLIR作为一种通用 IR，也支持特定硬件的操作。因此，对于围绕 MLIR 的基础设施（例如作用于其上的编译器Passes）的任何投入都会产生良好的回报；许多目标都可以使用该基础设施，并将从中受益。
@@ -41,9 +41,9 @@ MLIR 是一种功能强大的表示形式，但也有一些事情是它不想去
 
 在构建 MLIR 时，我们借鉴了构建其他 IR（LLVM IR、XLA HLO 和 Swift SIL）的经验。MLIR 框架鼓励现有的最佳实践，例如编写和维护 IR 规范、构建 IR 验证器、提供将 MLIR 文件转储和解析为文本的功能、使用 [FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html) 工具编写大量单元测试，以及将基础设施构建为一组可通过新方式组合的模块化库。
 
-其他经验教训也以微妙的方式被纳入和整合到设计中。例如，LLVM 存在一些不那么明显的设计错误，导致多线程编译器无法同时处理 LLVM 模块中的多个函数。MLIR 通过限制 SSA 作用范围来减短use-def链，并用显式[`符号引用`](Code Documentation/MLIR Language Reference.md#symbol-reference-attribute)取代跨函数引用，从而解决了这些问题。
+其他经验教训也以微妙的方式被纳入和整合到设计中。例如，LLVM 存在一些不那么明显的设计错误，导致多线程编译器无法同时处理 LLVM 模块中的多个函数。MLIR 通过限制 SSA 作用范围来减短use-def链，并用显式[`symbol reference`](Code%20Documentation/MLIR%20Language%20Reference.md#symbol-reference-attribute)取代跨函数引用，从而解决了这些问题。
 
 ## 引用 MLIR
 
-请参阅[常见问题](Getting Started/FAQ.md#如何在出版物中引用 MLIR？是否有随附论文？)，了解如何在出版物中引用 MLIR。
+请参阅[常见问题](Getting%20Started/FAQ.md#如何在出版物中引用 MLIR？是否有随附论文？)，了解如何在出版物中引用 MLIR。
 
