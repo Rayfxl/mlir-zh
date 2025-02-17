@@ -2,7 +2,7 @@
 
 MLIR（多层次 IR）是一种编译器中间表示形式，与传统的三地址 SSA 表示法（如[LLVM IR](http://llvm.org/docs/LangRef.html)或[SIL](https://github.com/apple/swift/blob/main/docs/SIL.rst)）相似，但它引入了多面体循环优化作为一级概念。这种混合设计经过优化，可用于表示、分析和变换高级数据流图以及为高性能数据并行系统生成特定目标代码。除了其表示功能之外，其单一的连续设计还提供了一个框架，可以从数据流图降低到高性能的特定目标代码。
 
-本文档定义并描述了 MLIR 中的关键概念，旨在作为一份枯燥的参考文档。相关的[基本原理文档](Rationale/Rationale.md)、[术语表](../Getting Started/Glossary.md)和其他内容托管在其他地方。
+本文档定义并描述了 MLIR 中的关键概念，旨在作为一份枯燥的参考文档。相关的[基本原理文档](Rationale/Rationale.md)、[术语表](../Getting%20Started/Glossary.md)和其他内容托管在其他地方。
 
 MLIR 设计为三种不同的使用形式：适合调试的人类可读文本形式、适合编程变换和分析的内存形式，以及适合存储和传输的紧凑序列化形式。不同的形式都描述了相同的语义内容。本文档介绍了人类可读的文本形式。
 
@@ -39,7 +39,7 @@ MLIR 设计为三种不同的使用形式：适合调试的人类可读文本形
 
 操作可以表示许多不同的概念，从高层概念（如函数定义、函数调用、缓冲区分配、缓冲区视图或切片以及进程创建）到较低层级的概念（如与目标无关的算术运算、特定于目标的指令、配置寄存器和逻辑门）。在MLIR中，这些不同的概念由不同的操作来表示，并且可以任意扩展MLIR中可用的操作集。
 
-MLIR 还使用熟悉的编译器[Passes](Passes.md)概念，为操作变换提供了一个可扩展的框架。在任意一组操作上启用任意一组Passes会导致巨大的扩展挑战，因为每种变换都必须考虑到任何一个操作的语义。MLIR 通过允许使用[特征](Traits/Traits.md)和[接口](Interfaces.md)抽象地描述操作语义来解决这种复杂性，使变换能够更通用地应用于操作。特征通常描述对有效 IR 的验证约束，从而能够捕获和检查复杂的不变量。（参见 [Op vs Operation](Tutorials/Toy Tutorial/Chapter 2：Emitting Basic MLIR#Op vs Operation：使用 MLIR 中的操作)）
+MLIR 还使用熟悉的编译器[Passes](Passes.md)概念，为操作变换提供了一个可扩展的框架。在任意一组操作上启用任意一组Passes会导致巨大的扩展挑战，因为每种变换都必须考虑到任何一个操作的语义。MLIR 通过允许使用[特征](Traits/Traits.md)和[接口](Interfaces.md)抽象地描述操作语义来解决这种复杂性，使变换能够更通用地应用于操作。特征通常描述对有效 IR 的验证约束，从而能够捕获和检查复杂的不变量。（参见 [Op vs Operation](Tutorials/Toy%20Tutorial/Chapter%202：Emitting%20Basic%20MLIR#Op%20vs%20Operation：使用%20MLIR%20中的操作)）
 
 MLIR 的一个明显应用是表示[基于 SSA ](https://en.wikipedia.org/wiki/Static_single_assignment_form)的IR，如 LLVM 核心 IR，通过适当选择操作类型来定义模块、函数、分支、内存分配和验证约束，以确保 SSA 支配属性。MLIR 包括定义此类结构的方言集合。但是，MLIR 旨在具有足够的通用性，以表示其他类似编译器的数据结构，例如语言前端中的抽象语法树、目标特定后端中的生成指令或高级综合工具中的电路。
 
@@ -186,22 +186,22 @@ MLIR 通过在标识符前加上符号（例如 `%`、`#`、`@`、`^`、`！`）
 
 值标识符仅在定义它们的 （嵌套） 区域[作用域内](#值作用域)使用，不能在该区域之外访问或引用。映射函数中的参数标识符在映射函数体的范围内。特定操作可能会进一步限制标识符在所处区域中的作用域。例如，具有[SSA 控制流语义](#控制流和SSACFG区域)的区域中值的作用域是根据[SSA支配](https://en.wikipedia.org/wiki/Dominator_\(graph_theory\))的标准定义来限制的。另一个例子是[IsolatedFromAbove 特征](Traits/Traits.md#IsolatedFromAbove)，它限制直接访问包含区域中定义的值。
 
-函数标识符和映射标识符与[符号](Symbols and Symbol Tables.md)相关联，其作用域规则取决于符号属性。
+函数标识符和映射标识符与[符号](Symbols%20and%20Symbol%20Tables.md)相关联，其作用域规则取决于符号属性。
 
 ## 方言
 
-方言是参与和扩展 MLIR 生态系统的机制。它们允许定义新的[操作](#操作)、[属性](#属性)和[类型](#类型系统)。每种方言都有一个唯一的`namespace` ，该命名空间以前缀的形式出现在每个已定义的属性/操作/类型中。例如，[Affine 方言](Dialects/'affine' Dialect.md)定义的命名空间为：`affine`。
+方言是参与和扩展 MLIR 生态系统的机制。它们允许定义新的[操作](#操作)、[属性](#属性)和[类型](#类型系统)。每种方言都有一个唯一的`namespace` ，该命名空间以前缀的形式出现在每个已定义的属性/操作/类型中。例如，[Affine 方言](Dialects/'affine'%20Dialect.md)定义的命名空间为：`affine`。
 
-MLIR 允许多种方言（即使是主树之外的方言）在一个模块中共存。方言由特定的passes生成和使用。MLIR 提供了一个在不同方言之间和方言内部进行转换的[框架](Dialect Conversion.md)。
+MLIR 允许多种方言（即使是主树之外的方言）在一个模块中共存。方言由特定的passes生成和使用。MLIR 提供了一个在不同方言之间和方言内部进行转换的[框架](Dialect%20Conversion.md)。
 
 MLIR 支持的几种方言：
 
-- [Affine dialect ](Dialects/'affine' Dialect.md)
-- [Func dialect ](Dialects/'func' Dialect.md)
-- [GPU dialect ](Dialects/'gpu' Dialect.md)
-- [LLVM dialect ](Dialects/'llvm' Dialect.md)
-- [SPIR-V dialect ](Dialects/SPIR-V Dialect.md)
-- [Vector dialect ](Dialects/'vector' Dialect.md)
+- [Affine dialect ](Dialects/'affine'%20Dialect.md)
+- [Func dialect ](Dialects/'func'%20Dialect.md)
+- [GPU dialect ](Dialects/'gpu'%20Dialect.md)
+- [LLVM dialect ](Dialects/'llvm'%20Dialect.md)
+- [SPIR-V dialect ](Dialects/SPIR-V%20Dialect.md)
+- [Vector dialect ](Dialects/'vector'%20Dialect.md)
 
 ### **目标特定操作**
 
@@ -237,7 +237,7 @@ dictionary-attribute  ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
 trailing-location     ::= `loc` `(` location `)`
 ```
 
-MLIR 引入了一个称为*操作*的统一概念，以便能够描述许多不同级别的抽象和计算。MLIR 中的操作是完全可扩展的（没有固定的操作列表），并具有特定于应用的语义。例如，MLIR 支持[与目标无关的操作](Dialects/'memref' Dialect.md)、[仿射操作](Dialects/'affine' Dialect.md)和[特定目标机器操作](#目标特定操作)。
+MLIR 引入了一个称为*操作*的统一概念，以便能够描述许多不同级别的抽象和计算。MLIR 中的操作是完全可扩展的（没有固定的操作列表），并具有特定于应用的语义。例如，MLIR 支持[与目标无关的操作](Dialects/'memref'%20Dialect.md)、[仿射操作](Dialects/'affine'%20Dialect.md)和[特定目标机器操作](#目标特定操作)。
 
 操作的内部表示很简单：操作由一个唯一的字符串标识（如`dim`,`tf.Conv2d`,`x86.repmovsb`,`ppc.eieio` 等），可以返回零个或多个结果，接受零个或多个操作数，存储[特性](#特性)，有一个[属性](#属性)字典，有零个或多个后续操作，以及零个或多个封闭[区域](#区域)。通用的输出形式包含所有这些元素，并用函数类型来表示结果和操作数的类型。
 
@@ -262,7 +262,7 @@ MLIR 引入了一个称为*操作*的统一概念，以便能够描述许多不�
 
 ### 内置操作
 
-[Builtin方言](Dialects/Builtin Dialect.md)定义了一些可广泛应用于 MLIR 方言的特定操作，如简化方言间/方言内转换的通用转换操作。该方言还定义了一个顶层`module`操作，代表了一个有用的 IR 容器。
+[Builtin方言](Dialects/Builtin%20Dialect.md)定义了一些可广泛应用于 MLIR 方言的特定操作，如简化方言间/方言内转换的通用转换操作。该方言还定义了一个顶层`module`操作，代表了一个有用的 IR 容器。
 
 ## 块
 
@@ -312,7 +312,7 @@ func.func @simple(i64, i1) -> i64 {
 }
 ```
 
-**上下文：**与传统的 “PHI 节点即操作 ”的SSA IR（如 LLVM）相比，“块参数 ”表示法消除了 IR 中的许多特殊情况。例如，SSA 的[并行复制语义](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.524.5461&rep=rep1&type=pdf)一目了然，函数参数也不再是特例：它们变成了入口块的参数[[更多原理](Rationale/MLIR Rationale.md#块参数与 PHI 节点)]。块也是一个基本概念，它不能由操作表示，因为在操作中定义的值无法在操作外部访问。
+**上下文：**与传统的 “PHI 节点即操作 ”的SSA IR（如 LLVM）相比，“块参数 ”表示法消除了 IR 中的许多特殊情况。例如，SSA 的[并行复制语义](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.524.5461&rep=rep1&type=pdf)一目了然，函数参数也不再是特例：它们变成了入口块的参数[[更多原理](Rationale/MLIR%20Rationale.md#块参数与%20PHI%20节点)]。块也是一个基本概念，它不能由操作表示，因为在操作中定义的值无法在操作外部访问。
 
 ## 区域
 
@@ -499,11 +499,11 @@ dialect-type-contents ::= dialect-type-body
 !foo.something<abcd>
 ```
 
-请参阅[此处](Defining Dialects/Defining Dialect Attributes and Types.md)以了解如何定义方言类型。
+请参阅[此处](Defining%20Dialects/Defining%20Dialect%20Attributes%20and%20Types.md)以了解如何定义方言类型。
 
 ### 内置类型
 
-[内置方言](Dialects/Builtin Dialect.md)定义了一组类型，这些类型可由 MLIR 中的任何其他方言直接使用。这些类型包括基本整数、浮点类型和函数类型等。
+[内置方言](Dialects/Builtin%20Dialect.md)定义了一组类型，这些类型可由 MLIR 中的任何其他方言直接使用。这些类型包括基本整数、浮点类型和函数类型等。
 
 ## 特性
 
@@ -518,7 +518,7 @@ attribute-entry ::= (bare-id | string-literal) `=` attribute-value
 attribute-value ::= attribute-alias | dialect-attribute | builtin-attribute
 ```
 
-属性 （Attributes） 是一种机制，用于在不允许使用变量的地方指定操作的常量数据，例如 [`cmpi` 操作](Dialects/'arith' Dialect.md#`arith.cmpi` (arith::CmpIOp))的比较谓词。每个操作都有一个属性字典，它将一组属性名与属性值关联起来。MLIR 的内置方言提供了一组丰富的开箱即用的[内置属性值](#内置属性值)（例如数组、字典、字符串等）。此外，方言还可以定义自己的[方言属性值](#方言属性值)。
+属性 （Attributes） 是一种机制，用于在不允许使用变量的地方指定操作的常量数据，例如 [`cmpi` 操作](Dialects/'arith'%20Dialect.md#`arith.cmpi`%20(arith::CmpIOp))的比较谓词。每个操作都有一个属性字典，它将一组属性名与属性值关联起来。MLIR 的内置方言提供了一组丰富的开箱即用的[内置属性值](#内置属性值)（例如数组、字典、字符串等）。此外，方言还可以定义自己的[方言属性值](#方言属性值)。
 
 对于尚未采用特性的方言，一个操作所附的顶层属性字典具有特殊语义。根据其字典键是否带有方言前缀，属性被分为两种不同类型：
 
@@ -588,11 +588,11 @@ dialect-attribute-contents ::= dialect-attribute-body
 #foo.string<"">
 ```
 
-请参阅[此处](Defining Dialects/Defining Dialect Attributes and Types.md)，了解如何定义方言属性值。
+请参阅[此处](Defining%20Dialects/Defining%20Dialect%20Attributes%20and%20Types.md)，了解如何定义方言属性值。
 
 ### 内置属性值
 
-[内置方言](Dialects/Builtin Dialect.md)定义了一组属性值，这些值可以被 MLIR 中的任何其他方言直接使用。这些类型包括基本整数和浮点值、属性字典、稠密多维数组等。
+[内置方言](Dialects/Builtin%20Dialect.md)定义了一组属性值，这些值可以被 MLIR 中的任何其他方言直接使用。这些类型包括基本整数和浮点值、属性字典、稠密多维数组等。
 
 ### IR版本控制
 

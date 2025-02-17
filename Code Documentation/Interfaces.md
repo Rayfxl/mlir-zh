@@ -610,11 +610,11 @@ MLIR 包括标准接口，这些接口提供的功能可能在许多不同的操
 - `RegionKindInterface`- 用于描述区域的抽象语义。
   - `RegionKind getRegionKind(unsigned index)`- 返回在此操作中带有给定索引的区域类型。
     - RegionKind::Graph - 表示没有控制流语义的图区域
-    - RegionKind::SSACFG - 表示具有基本块和可达性的[SSA风格控制流](MLIR Language Reference.md#控制流和SSACFG区域)区域
+    - RegionKind::SSACFG - 表示具有基本块和可达性的[SSA风格控制流](MLIR%20Language%20Reference.md#控制流和SSACFG区域)区域
 
   - `hasSSADominance(unsigned index)` - 如果在此操作中具有给定索引的区域需要支配，则返回 true。
 
 ##### SymbolInterfaces
 
-- `SymbolOpInterface` - 用于表示[`Symbol`](Symbols and Symbol Tables.md#符号)操作，这些操作直接就在定义了[`SymbolTable`](Symbols and Symbol Tables.md#符号表)的区域内。
-- `SymbolUserOpInterface` - 用于表示引用[`Symbol`](Symbols and Symbol Tables.md#符号)操作的操作。 它提供了对符号使用进行安全、高效验证的能力以及其他功能。
+- `SymbolOpInterface` - 用于表示[`Symbol`](Symbols%20and%20Symbol%20Tables.md#符号)操作，这些操作直接就在定义了[`SymbolTable`](Symbols%20and%20Symbol%20Tables.md#符号表)的区域内。
+- `SymbolUserOpInterface` - 用于表示引用[`Symbol`](Symbols%20and%20Symbol%20Tables.md#符号)操作的操作。 它提供了对符号使用进行安全、高效验证的能力以及其他功能。
