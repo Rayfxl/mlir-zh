@@ -65,7 +65,7 @@ MLIR 有一个单一的规范化pass，它以贪婪的方式迭代应用所有�
 
 ### 使用`RewritePattern`进行规范化
 
-该机制允许以一组 `RewritePattern`的形式提供规范化，这些重写模式可以是 C++ 中强制定义的，也可以是以[声明式重写规则](Table-driven Declarative Rewrite Rule(DRR).md)的形式声明的。模式重写基础设施允许表达许多不同类型的规范化。这些变换可以很简单，比如用移位代替乘法，甚至用无条件分支代替有条件分支。
+该机制允许以一组 `RewritePattern`的形式提供规范化，这些重写模式可以是 C++ 中强制定义的，也可以是以[声明式重写规则](Table-driven%20Declarative%20Rewrite%20Rule(DRR).md)的形式声明的。模式重写基础设施允许表达许多不同类型的规范化。这些变换可以很简单，比如用移位代替乘法，甚至用无条件分支代替有条件分支。
 
 在[ODS](Defining%20Dialects/Operation%20Definition%20Specification%20(ODS).md)中，操作可以设置 `hasCanonicalizer` 位或 `hasCanonicalizeMethod` 位，以生成 `getCanonicalizationPatterns` 方法的声明：
 
@@ -99,7 +99,7 @@ LogicalResult OtherOp::canonicalize(OtherOp op, PatternRewriter &rewriter) {
 
 ### 使用`fold`方法进行规范化
 
-`fold`机制是一个有意限制但功能强大的机制，它允许在整个编译器的许多地方应用规范化。例如，在规范化pass之外，`fold` 在[方言转换基础设施](Dialect Conversion.md)中被用作一种合法化机制，并且可以通过 `OpBuilder::createOrFold` 在有`OpBuilder` 的任何地方直接调用。
+`fold`机制是一个有意限制但功能强大的机制，它允许在整个编译器的许多地方应用规范化。例如，在规范化pass之外，`fold` 在[方言转换基础设施](Dialect%20Conversion.md)中被用作一种合法化机制，并且可以通过 `OpBuilder::createOrFold` 在有`OpBuilder` 的任何地方直接调用。
 
 `fold` 的限制条件是不能创建新的操作，只能替换根操作（但不能删除）。它允许就地更新操作，或返回一组预先存在的值（或属性）来替换操作。这确保了 `fold` 方法是真正的“局部”变换，无需模式重写器即可调用。
 
