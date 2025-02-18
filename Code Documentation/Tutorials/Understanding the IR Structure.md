@@ -1,10 +1,8 @@
-TODO
+# 理解IR结构
 
-# Understanding the IR Structure
+MLIR 语言参考描述了[高层结构](../MLIR%20Language%20Reference.md#高层结构)，本文档通过示例说明了该结构，并同时介绍了操作该结构所涉及的 C++ API。
 
-The MLIR Language Reference describes the [High Level Structure](https://mlir.llvm.org/docs/LangRef/#high-level-structure), this document illustrates this structure through examples, and introduces at the same time the C++ APIs involved in manipulating it.
-
-We will implement a [pass](https://mlir.llvm.org/docs/PassManagement/#operation-pass) that traverses any MLIR input and prints the entity inside the IR. A pass (or in general almost any piece of IR) is always rooted with an operation. Most of the time the top-level operation is a `ModuleOp`, the MLIR `PassManager` is actually limited to operation on a top-level `ModuleOp`. As such a pass starts with an operation, and so will our traversal:
+我们将实现一个[pass](../Pass%20Infrastructure#操作%20Pass)，它可以遍历任何 MLIR 输入并打印输出 IR 内部的实体。一个pass（或更一般地说，几乎任何 IR 片段）总是以一个操作为根。大多数情况下，顶层操作是一个`ModuleOp`，MLIR 的`PassManager`实际上仅限于对顶层`ModuleOp`的操作。因此，一个pass以一个操作为起点，我们的遍历也将如此：
 
 ```
   void runOnOperation() override {
@@ -14,19 +12,19 @@ We will implement a [pass](https://mlir.llvm.org/docs/PassManagement/#operation-
   }
 ```
 
-## Traversing the IR Nesting [¶](https://mlir.llvm.org/docs/Tutorials/UnderstandingTheIRStructure/#traversing-the-ir-nesting)
+## 遍历嵌套IR
 
-The IR is recursively nested, an `Operation` can have one or multiple nested `Region`s, each of which is actually a list of `Blocks`, each of which itself wraps a list of `Operation`s. Our traversal will follow this structure with three methods: `printOperation()`, `printRegion()`, and `printBlock()`.
+IR 是递归嵌套的，一个`Operation`可以有一个或多个嵌套的`Region`，每个区域实际上是一个`Blocks`列表，每个块本身又封装了一个`Operation`列表。我们的遍历将遵循这种结构，使用三个方法：`printOperation()`、`printRegion()` 和`printBlock()`。
 
-The first method inspects the properties of an operation, before iterating on the nested regions and print them individually:
+第一个方法先检查操作的特性，然后遍历嵌套区域并逐个打印输出：
 
 ```c++
   void printOperation(Operation *op) {
-    // Print the operation itself and some of its properties
+    // 打印操作本身及其部分特性
     printIndent() << "visiting op: '" << op->getName() << "' with "
                   << op->getNumOperands() << " operands and "
                   << op->getNumResults() << " results\n";
-    // Print the operation attributes
+    // 打印操作属性
     if (!op->getAttrs().empty()) {
       printIndent() << op->getAttrs().size() << " attributes:\n";
       for (NamedAttribute attr : op->getAttrs())
@@ -34,7 +32,7 @@ The first method inspects the properties of an operation, before iterating on th
                       << attr.getValue() << "'\n";
     }
 
-    // Recurse into each of the regions attached to the operation.
+    // 对操作附加的每个区域执行递归。
     printIndent() << " " << op->getNumRegions() << " nested regions:\n";
     auto indent = pushIndent();
     for (Region &region : op->getRegions())
@@ -42,11 +40,11 @@ The first method inspects the properties of an operation, before iterating on th
   }
 ```
 
-A `Region` does not hold anything other than a list of `Block`s:
+一个 `Region` 除了包含一个 `Block` 列表外，不包含任何其他内容：
 
 ```c++
   void printRegion(Region &region) {
-    // A region does not hold anything by itself other than a list of blocks.
+    // 除了一个块列表外，区域本身不包含任何其他内容。
     printIndent() << "Region with " << region.getBlocks().size()
                   << " blocks:\n";
     auto indent = pushIndent();
@@ -55,31 +53,30 @@ A `Region` does not hold anything other than a list of `Block`s:
   }
 ```
 
-Finally, a `Block` has a list of arguments, and holds a list of `Operation`s:
+最后，一个 `Block` 有一个参数列表，并包含一个 `Operation` 列表：
 
 ```c++
   void printBlock(Block &block) {
-    // Print the block intrinsics properties (basically: argument list)
+    // 打印输出块的内在特性（最基本的：参数列表）
     printIndent()
         << "Block with " << block.getNumArguments() << " arguments, "
         << block.getNumSuccessors()
         << " successors, and "
-        // Note, this `.size()` is traversing a linked-list and is O(n).
+        // 注意，这个 `.size()` 正在遍历一个链表，时间复杂度是 O(n)。
         << block.getOperations().size() << " operations\n";
 
-    // A block main role is to hold a list of Operations: let's recurse into
-    // printing each operation.
+    // block的主要作用是保存操作列表：让我们递归打印输出每个操作。
     auto indent = pushIndent();
     for (Operation &op : block.getOperations())
       printOperation(&op);
   }
 ```
 
-The code for the pass is available [here in the repo](https://github.com/llvm/llvm-project/blob/main/mlir/test/lib/IR/TestPrintNesting.cpp) and can be exercised with `mlir-opt -test-print-nesting`.
+这个pass的代码可在[此处代码仓库](https://github.com/llvm/llvm-project/blob/main/mlir/test/lib/IR/TestPrintNesting.cpp)中找到，并可使用 `mlir-opt -test-print-nesting` 进行测试。
 
-### Example [¶](https://mlir.llvm.org/docs/Tutorials/UnderstandingTheIRStructure/#example)
+### 示例
 
-The Pass introduced in the previous section can be applied on the following IR with `mlir-opt -test-print-nesting -allow-unregistered-dialect llvm-project/mlir/test/IR/print-ir-nesting.mlir`:
+使用 `mlir-opt -test-print-nesting -allow-unregistered-dialect llvm-project/mlir/test/IR/print-ir-nesting.mlir`，可以在以下 IR 上应用上一小节中引入的 Pass：
 
 ```mlir
 "builtin.module"() ( {
@@ -99,7 +96,7 @@ The Pass introduced in the previous section can be applied on the following IR w
 }) : () -> ()
 ```
 
-And will yield the following output:
+将产生以下输出：
 
 ```
 visiting op: 'builtin.module' with 0 operands and 0 results
@@ -136,37 +133,36 @@ visiting op: 'builtin.module' with 0 operands and 0 results
              0 nested regions:
 ```
 
-## Other IR Traversal Methods [¶](https://mlir.llvm.org/docs/Tutorials/UnderstandingTheIRStructure/#other-ir-traversal-methods)
+## 其他IR遍历方法
 
-In many cases, unwrapping the recursive structure of the IR is cumbersome and you may be interested in using other helpers.
+在许多情况下，展开 IR 的递归结构非常麻烦，因此你可能想使用其他辅助工具。
 
-### Filtered iterator: `getOps<OpTy>()` [¶](https://mlir.llvm.org/docs/Tutorials/UnderstandingTheIRStructure/#filtered-iterator-getopsopty)
+### 过滤迭代器：`getOps<OpTy>()`
 
-For example the `Block` class exposes a convenient templated method `getOps<OpTy>()` that provided a filtered iterator. Here is an example:
+例如，`Block`类提供了一个方便的模板方法`getOps<OpTy>()`，该方法提供了一个过滤迭代器。下面是一个例子：
 
 ```c++
   auto varOps = entryBlock.getOps<spirv::GlobalVariableOp>();
   for (spirv::GlobalVariableOp gvOp : varOps) {
-     // process each GlobalVariable Operation in the block.
+     // 处理块中的每个GlobalVariable操作。
      ...
   }
 ```
 
-Similarly, the `Region` class exposes the same `getOps` method that will iterate on all the blocks in the region.
+同样，`Region`类也提供了相同的 `getOps` 方法，该方法将遍历区域中的所有块。
 
-### Walkers [¶](https://mlir.llvm.org/docs/Tutorials/UnderstandingTheIRStructure/#walkers)
+### Walkers
 
-The `getOps<OpTy>()` is useful to iterate on some Operations immediately listed inside a single block (or a single region), however it is frequently interesting to traverse the IR in a nested fashion. To this end MLIR exposes the `walk()` helper on `Operation`, `Block`, and `Region`. This helper takes a single argument: a callback method that will be invoked for every operation recursively nested under the provided entity.
+`getOps<OpTy>()` 对于遍历单个块（或单个区域）内立即列出的一些操作非常有用，但以嵌套方式遍历 IR 也很有趣。为此，MLIR 在`Operation`、`Block`和`Region`上提供了`walk()`辅助函数。该辅助函数接收一个单一参数：一个回调方法，它将被提供的实体下递归嵌套的每个操作调用。
 
 ```c++
-  // Recursively traverse all the regions and blocks nested inside the function
-  // and apply the callback on every single operation in post-order.
+  // 递归遍历嵌套在函数内部的所有区域和块，并对后序遍历中的每个操作应用回调函数。
   getFunction().walk([&](mlir::Operation *op) {
-    // process Operation `op`.
+    // 处理操作 `op`.
   });
 ```
 
-The provided callback can be specialized to filter on a particular type of Operation, for example the following will apply the callback only on `LinalgOp` operations nested inside the function:
+提供的回调函数可以专门用于过滤特定类型的操作，例如，以下示例将回调函数仅应用于函数内部嵌套的 `LinalgOp` 操作：
 
 ```c++
   getFunction().walk([](LinalgOp linalgOp) {
@@ -174,7 +170,7 @@ The provided callback can be specialized to filter on a particular type of Opera
   });
 ```
 
-Finally, the callback can optionally stop the walk by returning a `WalkResult::interrupt()` value. For example the following walk will find all `AllocOp` nested inside the function and interrupt the traversal if one of them does not satisfy a criteria:
+最后，回调可以选择通过返回一个 `WalkResult::interrupt()` 值来停止遍历。例如，下面的遍历将查找嵌套在函数内部的所有 `AllocOp`，并在其中一个不满足条件时中断遍历：
 
 ```c++
   WalkResult result = getFunction().walk([&](AllocOp allocOp) {
@@ -189,19 +185,18 @@ Finally, the callback can optionally stop the walk by returning a `WalkResult::i
 
 ## 遍历 def-use 链
 
-Another relationship in the IR is the one that links a `Value` with its users. As defined in the [language reference](https://mlir.llvm.org/docs/LangRef/#high-level-structure), each Value is either a `BlockArgument` or the result of exactly one `Operation` (an `Operation` can have multiple results, each of them is a separate `Value`). The users of a `Value` are `Operation`s, through their arguments: each `Operation` argument references a single `Value`.
+IR 中的另一种关系是将 `Value` 与其使用者联系起来的关系。正如[语言参考](../MLIR%20Language%20Reference.md#高层结构)中所定义的，每个值要么是一个`BlockArgument`，要么是一个`Operation`的结果（一个`Operation`可以有多个结果，每个结果都是一个单独的`Value`）。`Value`的使用者是`Operation`，通过它们的参数：每个`Operation`参数引用一个`Value`。
 
-Here is a code sample that inspects the operands of an `Operation` and prints some information about them:
+下面是一个代码示例，它检查了一个 `Operation` 的操作数，并打印输出了一些相关信息：
 
 ```c++
-  // Print information about the producer of each of the operands.
+  // 打印输出每个操作数的生产者信息。
   for (Value operand : op->getOperands()) {
     if (Operation *producer = operand.getDefiningOp()) {
       llvm::outs() << "  - Operand produced by operation '"
                    << producer->getName() << "'\n";
     } else {
-      // If there is no defining op, the Value is necessarily a Block
-      // argument.
+      // 如果没有定义操作，那么 Value 必然是一个 Blocargument。
       auto blockArg = operand.cast<BlockArgument>();
       llvm::outs() << "  - Operand produced by Block argument, number "
                    << blockArg.getArgNumber() << "\n";
@@ -209,10 +204,10 @@ Here is a code sample that inspects the operands of an `Operation` and prints so
   }
 ```
 
-Similarly, the following code sample iterates through the result `Value`s produced by an `Operation` and for each result will iterate the users of these results and print informations about them:
+同样，下面的代码示例遍历了由`Operation`产生的结果`Value` ，并对每个结果遍历这些结果的使用者并打印输出相关信息：
 
 ```c++
-  // Print information about the user of each of the result.
+  // 打印每个结果的使用者信息。
   llvm::outs() << "Has " << op->getNumResults() << " results:\n";
   for (auto indexedResult : llvm::enumerate(op->getResults())) {
     Value result = indexedResult.value();
@@ -235,12 +230,12 @@ Similarly, the following code sample iterates through the result `Value`s produc
   }
 ```
 
-The illustrating code for this pass is available [here in the repo](https://github.com/llvm/llvm-project/blob/main/mlir/test/lib/IR/TestPrintDefUse.cpp) and can be exercised with `mlir-opt -test-print-defuse`.
+此pass的示例代码可在[此处的代码仓库](https://github.com/llvm/llvm-project/blob/main/mlir/test/lib/IR/TestPrintDefUse.cpp)中找到，并可使用 `mlir-opt -test-print-defuse` 进行测试。
 
-The chaining of `Value`s and their uses can be viewed as following:
+`Value`的链式关系以及它们的使用可以被看作是以下这样：
 
 ![Index Map Example](https://mlir.llvm.org/includes/img/DefUseChains.svg)
 
-The uses of a `Value` (`OpOperand` or `BlockOperand`) are also chained in a doubly linked-list, which is particularly useful when replacing all uses of a `Value` with a new one (“RAUW”):
+一个`Value`（`OpOperand`或`BlockOperand`）的使用也以双向链表的形式链接，这在用一个新的值替换所有`Value`的使用时特别有用(“RAUW”)：
 
 ![Index Map Example](https://mlir.llvm.org/includes/img/Use-list.svg)
