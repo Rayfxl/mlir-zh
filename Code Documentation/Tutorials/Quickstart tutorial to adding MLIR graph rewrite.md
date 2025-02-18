@@ -184,8 +184,6 @@ struct ConvertTFLeakyRelu : public RewritePattern {
 
 MLIR 使用[lit](https://llvm.org/docs/CommandGuide/lit.html)（LLVM 集成测试）工具进行测试。测试方法是创建输入 IR 文件，运行变换，然后验证输出 IR。C++ 单元测试是个例外，IR 变换作为核心测试机制。这就减少了需要构建（和链接）的二进制文件，并迫使人们将注意力集中在作为重要组成部分的表示法上。
 
-For the legalization transform above we would have a test (probably as part of the legalization pass test in TensorFlow Lite) such as:
-
 对于上述合法化变换，我们需要进行如下测试（可能作为 TensorFlow Lite 中的合法化pass测试的一部分）：
 
 ```mlir
