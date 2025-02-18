@@ -2689,7 +2689,7 @@ Currently, only power-of-two integer bitwidths are supported.
 
 *Legalize memref operations to be convertible to LLVM.*
 
-### `-normalize-memrefs` [¶](https://mlir.llvm.org/docs/Passes/#-normalize-memrefs)
+### `-normalize-memrefs`
 
 *Normalize memrefs*
 
