@@ -1,66 +1,61 @@
-TODO
+# 第1章：Toy语言和AST
 
-# Chapter 1: Toy Language and AST
+- [语言](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/#the-language)
+- [AST](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/#the-ast)
 
-- [The Language](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/#the-language)
-- [The AST](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/#the-ast)
+## 语言
 
-## The Language [¶](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/#the-language)
+本教程将使用一种玩具语言来说明，我们称之为“Toy”（命名很难......）。Toy 是一种基于张量的语言，它允许你定义函数、执行一些数学计算并打印结果。
 
-This tutorial will be illustrated with a toy language that we’ll call “Toy” (naming is hard…). Toy is a tensor-based language that allows you to define functions, perform some math computation, and print results.
-
-Given that we want to keep things simple, the codegen will be limited to tensors of rank <= 2, and the only datatype in Toy is a 64-bit floating point type (aka ‘double’ in C parlance). As such, all values are implicitly double precision, `Values` are immutable (i.e. every operation returns a newly allocated value), and deallocation is automatically managed. But enough with the long description; nothing is better than walking through an example to get a better understanding:
+考虑到我们希望保持简单，代码生成将仅限于秩 <= 2 的张量，Toy 中唯一的数据类型是 64 位浮点类型（C 语言中又称 “double”）。因此，所有值都是隐式双精度的，`Values`是不可变的（即每个操作都会返回一个新分配的值），并且释放是自动管理的。长篇大论就到此为止吧，没有什么比通过一个示例来更好地理解它了：
 
 ```toy
 def main() {
-  # Define a variable `a` with shape <2, 3>, initialized with the literal value.
-  # The shape is inferred from the supplied literal.
+  # 定义一个形状为 <2, 3> 的变量 `a`，初始化为字面值。
+  # 形状由提供的字面值推断。
   var a = [[1, 2, 3], [4, 5, 6]];
 
-  # b is identical to a, the literal tensor is implicitly reshaped: defining new
-  # variables is the way to reshape tensors (element count must match).
+  # b 与 a 相同，字面张量被隐式重塑：定义新变量是重塑张量的方法（元素数量必须匹配）。
   var b<2, 3> = [1, 2, 3, 4, 5, 6];
 
-  # transpose() and print() are the only builtin, the following will transpose
-  # a and b and perform an element-wise multiplication before printing the result.
+  # transpose() 和 print() 是唯一的内置函数。
+  # 下面的代码将对 a 和 b 进行转置，并在打印结果之前执行逐元素乘法操作。
   print(transpose(a) * transpose(b));
 }
 ```
 
-Type checking is statically performed through type inference; the language only requires type declarations to specify tensor shapes when needed. Functions are generic: their parameters are unranked (in other words, we know these are tensors, but we don’t know their dimensions). They are specialized for every newly discovered signature at call sites. Let’s revisit the previous example by adding a user-defined function:
+类型检查是通过类型推断静态执行的；该语言只在需要时要求类型声明来指定张量形状。函数是通用的：它们的参数是无秩的（换句话说，我们知道它们是张量，但不知道它们的维度）。函数会在调用点为每个新发现的签名进行特化处理。让我们重温前面的例子，添加一个用户自定义函数：
 
 ```toy
-# User defined generic function that operates on unknown shaped arguments.
+# 用户定义的通用函数，可对未知形状的参数进行操作。
 def multiply_transpose(a, b) {
   return transpose(a) * transpose(b);
 }
 
 def main() {
-  # Define a variable `a` with shape <2, 3>, initialized with the literal value.
+  # 定义形状为 <2, 3> 的变量 `a`，用字面值初始化。
   var a = [[1, 2, 3], [4, 5, 6]];
   var b<2, 3> = [1, 2, 3, 4, 5, 6];
 
-  # This call will specialize `multiply_transpose` with <2, 3> for both
-  # arguments and deduce a return type of <3, 2> in initialization of `c`.
+  # 这次调用将对 `multiply_transpose` 进行特化。
+  # 两个参数都是 <2, 3>，并在初始化 `c` 时推导出 <3, 2> 的返回类型。
   var c = multiply_transpose(a, b);
 
-  # A second call to `multiply_transpose` with <2, 3> for both arguments will
-  # reuse the previously specialized and inferred version and return <3, 2>.
+  # 第二次调用`multiply_transpose`时，如果两个参数都是<2,3>，
+  # 则会重用之前特化和推断的版本，并返回<3,2>。
   var d = multiply_transpose(b, a);
 
-  # A new call with <3, 2> (instead of <2, 3>) for both dimensions will
-  # trigger another specialization of `multiply_transpose`.
+  # 在新的调用中，如果两个维度都是<3，2>(而不是<2，3>)，则会触发又一次对`multiply_transpose`的特化。
   var e = multiply_transpose(c, d);
 
-  # Finally, calling into `multiply_transpose` with incompatible shapes
-  # (<2, 3> and <3, 2>) will trigger a shape inference error.
+  # 最后，在形状不兼容（<2, 3> 和 <3, 2>）的情况下调用 `multiply_transpose` 会触发形状推断错误。
   var f = multiply_transpose(a, c);
 }
 ```
 
-## The AST [¶](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/#the-ast)
+## AST
 
-The AST from the above code is fairly straightforward; here is a dump of it:
+上述代码的 AST 相当简单明了，下面是它的转储：
 
 ```
 Module:
@@ -108,8 +103,8 @@ Module:
     } // Block
 ```
 
-You can reproduce this result and play with the example in the `examples/toy/Ch1/` directory; try running `path/to/BUILD/bin/toyc-ch1 test/Examples/Toy/Ch1/ast.toy -emit=ast`.
+你可以在`examples/toy/Ch1/`目录中复现这一结果并使用该示例；请尝试运行`path/to/BUILD/bin/toyc-ch1 test/Examples/Toy/Ch1/ast.toy -emit=ast`。
 
-The code for the lexer is fairly straightforward; it is all in a single header: `examples/toy/Ch1/include/toy/Lexer.h`. The parser can be found in `examples/toy/Ch1/include/toy/Parser.h`; it is a recursive descent parser. If you are not familiar with such a Lexer/Parser, these are very similar to the LLVM Kaleidoscope equivalent that are detailed in the first two chapters of the [Kaleidoscope Tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html).
+词法分析器的代码相当简单明了，全部包含在一个头文件中：`examples/toy/Ch1/include/toy/Lexer.h`。语法分析器可以在`examples/toy/Ch1/include/toy/Parser.h`中找到；它是一个递归下降分析器。如果你对这种 Lexer/Parser 不熟悉，可以参考[Kaleidoscope Tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html)的前两章，那里有类似的实现和详细说明。
 
-The [next chapter](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-2/) will demonstrate how to convert this AST into MLIR.
+[下一章](https://mlir.llvm.org/docs/Tutorials/Toy/Ch-2/)将演示如何将此 AST 转换为 MLIR。

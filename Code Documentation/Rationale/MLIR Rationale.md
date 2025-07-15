@@ -1,75 +1,73 @@
-TODO
+# MLIR基本原理
 
-# MLIR Rationale
+本文档旨在记录 MLIR 设计过程中的一些公开辩论和考虑过的一些替代方案，以及我们做出某些决定的理由。这并不是一份“精雕细琢”的文档，我们更倾向于将一些有趣的花絮放入其中，而不必过于担心它们的一致性或可读性。
 
-This document is intended to capture some of the alternatives considered and open debates in the design of MLIR, along with the rationale for certain decisions we made. This is not intended to be a “finely groomed” document - we prefer the ability to dump in interesting tidbits without worrying too much about their consistency or readability.
+- [摘要](#摘要)
+- [引言和动机](#引言和动机)
+- [设计决策](#设计决策)
+  - [加载和存储](#加载和存储)
+  - [符号和类型](#符号和类型)
+  - [块参数vsPHI结点](#块参数vsPHI节点)
+  - [索引类型的使用和限制](#索引类型的使用和限制)
+  - [非基本类型的数据布局](#非基本类型的数据布局)
+  - [整数符号语义](#整数符号语义)
+  - [拆分浮点操作与整数操作](#拆分浮点操作与整数操作)
+  - [在整数比较操作中指定符号](#在整数比较操作中指定符号)
+  - [将比较类型指定为属性](#将比较类型指定为属性)
+  - [区域](#区域)
+  - [方言类型扩展](#方言类型扩展)
+  - [元组类型](#元组类型)
+  - [装配形式](#装配形式)
+- [示例](#示例)
+  - [非仿射控制流](#非仿射控制流)
+  - [非仿射循环边界](#非仿射循环边界)
+  - [2D卷积参考实现](#2D卷积参考实现)
+- [设计备选方案和扩展](#设计备选方案和扩展)
+  - [多面体代码表示替代方案：调度表vs调度树vs仿射循环/if形式](#多面体代码表示替代方案：调度表vs调度树vs仿射循环/if形式)
+  - [仿射关系](#仿射关系)
+  - [区域](#区%20域)
+  - [外部函数的Read/Write/May_Read/May_Write设置](#外部函数的Read/Write/May_Read/May_Write设置)
+  - [Memref扩展](#Memref扩展)
+  - [用于“逃逸标量“的`affine.if`和`affine.for`扩展](#用于“逃逸标量“的`affine.if`和`affine.for`扩展)
+  - [编译器多线程处理](#编译器多线程处理)
 
-- [Abstract](https://mlir.llvm.org/docs/Rationale/Rationale/#abstract)
-- [Introduction and Motivation](https://mlir.llvm.org/docs/Rationale/Rationale/#introduction-and-motivation)
-- Design Decisions
-  - [Loads and stores](https://mlir.llvm.org/docs/Rationale/Rationale/#loads-and-stores)
-  - [Symbols and types](https://mlir.llvm.org/docs/Rationale/Rationale/#symbols-and-types)
-  - [Block Arguments vs PHI nodes](https://mlir.llvm.org/docs/Rationale/Rationale/#block-arguments-vs-phi-nodes)
-  - [Index type usage and limitations](https://mlir.llvm.org/docs/Rationale/Rationale/#index-type-usage-and-limitations)
-  - [Data layout of non-primitive types](https://mlir.llvm.org/docs/Rationale/Rationale/#data-layout-of-non-primitive-types)
-  - [Integer signedness semantics](https://mlir.llvm.org/docs/Rationale/Rationale/#integer-signedness-semantics)
-  - [Splitting floating point vs integer operations](https://mlir.llvm.org/docs/Rationale/Rationale/#splitting-floating-point-vs-integer-operations)
-  - [Specifying sign in integer comparison operations](https://mlir.llvm.org/docs/Rationale/Rationale/#specifying-sign-in-integer-comparison-operations)
-  - [Specifying comparison kind as attribute](https://mlir.llvm.org/docs/Rationale/Rationale/#specifying-comparison-kind-as-attribute)
-  - [Regions](https://mlir.llvm.org/docs/Rationale/Rationale/#regions)
-  - [Dialect type extensions](https://mlir.llvm.org/docs/Rationale/Rationale/#dialect-type-extensions)
-  - [Tuple types](https://mlir.llvm.org/docs/Rationale/Rationale/#tuple-types)
-  - [Assembly forms](https://mlir.llvm.org/docs/Rationale/Rationale/#assembly-forms)
-- Examples
-  - [Non-affine control flow](https://mlir.llvm.org/docs/Rationale/Rationale/#non-affine-control-flow)
-  - [Non-affine loop bounds](https://mlir.llvm.org/docs/Rationale/Rationale/#non-affine-loop-bounds)
-  - [Reference 2D Convolution](https://mlir.llvm.org/docs/Rationale/Rationale/#reference-2d-convolution)
-- Design alternatives and extensions
-  - [Polyhedral code representation alternatives: schedule lists vs schedules trees vs affine loop/if forms](https://mlir.llvm.org/docs/Rationale/Rationale/#polyhedral-code-representation-alternatives-schedule-lists-vs-schedules-trees-vs-affine-loopif-forms)
-  - [Affine Relations](https://mlir.llvm.org/docs/Rationale/Rationale/#affine-relations)
-  - [Regions](https://mlir.llvm.org/docs/Rationale/Rationale/#regions-1)
-  - [Read/Write/May_Read/May_Write sets for External Functions](https://mlir.llvm.org/docs/Rationale/Rationale/#readwritemay_readmay_write-sets-for-external-functions)
-  - [Memref Extensions](https://mlir.llvm.org/docs/Rationale/Rationale/#memref-extensions)
-  - [`affine.if` and `affine.for` Extensions for “Escaping Scalars”](https://mlir.llvm.org/docs/Rationale/Rationale/#affineif-and-affinefor-extensions-for-escaping-scalars)
-  - [Multithreading the compiler](https://mlir.llvm.org/docs/Rationale/Rationale/#multithreading-the-compiler)
+## 摘要
 
-## Abstract [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#abstract)
+MLIR 是一种编译器中间表示形式，与传统的三地址 SSA 表示法（如 [LLVM IR](http://llvm.org/docs/LangRef.html) 或 [SIL](https://github.com/apple/swift/blob/main/docs/SIL.rst)）类似，但它引入了多面体循环优化工作中的概念作为一级概念。这种混合设计经过优化，可以表示、分析和变换高级数据流图以及为高性能数据并行系统生成的特定目标代码。除了其表示能力之外，它的单一连续设计还提供了一个框架，可从数据流图降级到高性能目标特定代码。
 
-MLIR is a compiler intermediate representation with similarities to traditional three-address SSA representations (like [LLVM IR](http://llvm.org/docs/LangRef.html) or [SIL](https://github.com/apple/swift/blob/main/docs/SIL.rst)), but which introduces notions from the polyhedral loop optimization works as first class concepts. This hybrid design is optimized to represent, analyze, and transform high level dataflow graphs as well as target-specific code generated for high performance data parallel systems. Beyond its representational capabilities, its single continuous design provides a framework to lower from dataflow graphs to high performance target specific code.
+MLIR可以代表“多级IR”、“多维循环IR”、“机器学习IR”或“中级IR”中的一种，我们更倾向于第一种解释。本文档仅介绍 MLIR 的基本原理，其实际[规范文档](https://mlir.llvm.org/docs/LangRef/)和其他内容在其他地方提供。
 
-MLIR stands for one of “Multi-Level IR” or “Multi-dimensional Loop IR” or “Machine Learning IR” or “Mid Level IR”, we prefer the first. This document only provides the rationale behind MLIR – its actual [specification document](https://mlir.llvm.org/docs/LangRef/) and other content is hosted elsewhere.
+## 引言和动机
 
-## Introduction and Motivation [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#introduction-and-motivation)
+多级中间表示（MLIR）旨在方便表达和优化涉及深循环嵌套和高维密集矩阵的计算。因此，它特别适合深度学习计算。然而，它足够通用，也可以表示任意的顺序计算。这种表示法允许对各种并行架构进行高级优化和并行化，包括那些具有深度内存层次结构的架构，即通用多核、GPU 和专用神经网络加速器。
 
-The Multi-Level Intermediate Representation (MLIR) is intended for easy expression and optimization of computations involving deep loop nests and dense matrices of high dimensionality. It is thus well-suited to deep learning computations in particular. Yet it is general enough to also represent arbitrary sequential computation. The representation allows high-level optimization and parallelization for a wide range of parallel architectures including those with deep memory hierarchies — general-purpose multicores, GPUs, and specialized neural network accelerators.
+MLIR 使用从 LLVM 和 Swift 的 IR 中汲取的思想来构建较低级别的结构，同时结合多面体抽象的理念，将循环嵌套、多维数据（张量）和这些实体上的变换作为 IR 中的一级概念来表示。
 
-MLIR uses ideas drawn from IRs of LLVM and Swift for lower level constructs while combining them with ideas from the polyhedral abstraction to represent loop nests, multidimensional data (tensors), and transformations on these entities as first class concepts in the IR.
+MLIR 是一种多级 IR，也就是说，它可以在特定领域表示（如 HLO 或 TensorFlow 图）中表示代码，一直到机器级别。MLIR 能够表示任意控制流和任意数据访问，并且足够通用，几乎可以表示所有的顺序计算。这是与现有多面体表示法实现（如 LLVM [Polly](https://polly.llvm.org/)）的主要区别，后者能够以一种与 LLVM IR 隔离的方式使用多面体抽象，而且只适用于仿射循环嵌套，即代码中数组访问、循环边界和条件语句都是规则的（涉及循环迭代器和常量符号的线性函数）。静态不可预测的数据访问或控制流的存在并不妨碍用 MLIR 表示，只是在一定程度上限制了使用多面体抽象推理和应用变换的能力。
 
-MLIR is a multi-level IR, i.e., it represents code at a domain-specific representation such as HLO or TensorFlow graphs, all the way down to the machine level. MLIR is able to represent arbitrary control flow and arbitrary data accesses, and is general enough to represent nearly all sequential computation. This is a key distinction from existing polyhedral representation implementations (such as LLVM [Polly](https://polly.llvm.org/)) that are able to use the polyhedral abstraction in a way isolated from the LLVM IR and only for affine loop nests, i.e., portions of the code where array accesses, loop bounds, and conditionals are regular (involve linear functions of loop iterators and constant symbols). The presence of statically unpredictable data accesses or control flow does not preclude representation in MLIR, but only limits to a certain extent the ability to reason about and apply transformations using the polyhedral abstraction.
+具有仿射约束的 Map、Set 和 Relations 是高维循环嵌套和多维数组的多面体表示的核心结构。这些结构以接近数学形式的文本表达式表示。这些结构用于捕获循环嵌套、张量数据结构，以及如何为目标架构重新排序和映射它们。所有结构化或“一致”循环都被捕获为多面体信息的一部分，张量变量、它们的布局和内存中对这些张量的下标访问也是如此。
 
-Maps, sets, and relations with affine constraints are the core structures underlying a polyhedral representation of high-dimensional loop nests and multidimensional arrays. These structures are represented as textual expressions in a form close to their mathematical form. These structures are used to capture loop nests, tensor data structures, and how they are reordered and mapped for a target architecture. All structured or “conforming” loops are captured as part of the polyhedral information, and so are tensor variables, their layouts, and subscripted accesses to these tensors in memory.
+利用 IR 中捕获的信息，可以紧凑地表达所有循环变换、数据重映射、加速器中显式寻址内存所需的显式拷贝、映射到专家编写的预调优原语，以及映射到的专用矢量指令。可以轻松实现的循环变换包括仿射变换的主体：它们包含所有传统的循环变换（单模和非单模），如循环平铺、交换、排列、倾斜、缩放、相对移位、反转、融合和分配/裂变。通过仿射布局映射，还能很好地表示数据布局的变换，如填充和变换为块状布局。
 
-The information captured in the IR allows a compact expression of all loop transformations, data remappings, explicit copying necessary for explicitly addressed memory in accelerators, mapping to pre-tuned expert-written primitives, and mapping to specialized vector instructions. Loop transformations that can be easily implemented include the body of affine transformations: these subsume all traditional loop transformations (unimodular and non-unimodular) such as loop tiling, interchange, permutation, skewing, scaling, relative shifting, reversal, fusion, and distribution/fission. Transformations on data layout such as padding and transforming to blocked layouts are also represented well via affine layout maps.
+MLIR 的设计允许逐步降级目标的特定形式。除了典型的中级优化器需要处理的循环嵌套和数据布局的高级变换外，MLIR 还设计用于执行典型的后端 IR 需要执行的某些低级调度和映射决策：包括映射到专用矢量指令、自动矢量化和软件流水线。支持这些变换的需求源于这样一个事实，即神经网络加速器具有处理大块数据的专用单元，这些数据块的计算映射回循环嵌套的多个循环块，正如在更接近原始规范的级别上看到的程序那样。从程序员的角度来看，这些专用单元或指令可对多维数据块进行操作。因此，在接近汇编的极低层次 IR 上运行的后端很难或不可能提升和重建循环并执行这样的映射。这与当今编译器中的经典指令选择和调度形成鲜明对比，后者主要只处理最内层循环的主体。MLIR 还便于自动映射到专家预调优的原语或供应商提供的库，这些原语或库对内存层次结构中更高层次（或最高层）的数据进行操作。
 
-MLIR’s design allows a progressive lowering to target-specific forms. Besides high-level transformations for loop nests and data layouts that a typical mid-level optimizer is expected to deal with, MLIR is also designed to perform certain low-level scheduling and mapping decisions that a typical backend IR is entrusted with: these include mapping to specialized vector instructions, auto-vectorization, and software pipelining. The need to support these transformations stems from the fact that neural network accelerators have specialized units that deal with large chunks of data whose computation maps back to chunks of more than one loop of the loop nests as viewed by a program at a level closer to the original specification. Such specialized units or instructions operate on multidimensional data chunks from a programmer’s viewpoint. It thus makes it hard or infeasible for a backend operating on a very low-level IR close to assembly to lift and reconstruct loops and perform such a mapping. This is in contrast to classic instruction selection and scheduling in today’s compilers that primarily only deals with the body of the innermost loop. MLIR also facilitates automatic mapping to expert pre-tuned primitives or vendor libraries operating on data at higher levels (or at the highest level) of the memory hierarchy.
+总之，MLIR 对于降级到通用和专用加速器所需的那种变换来说是方便的，并且是封闭的。它还允许构建模块化、可重用的独立于目标和依赖于目标的passes。
 
-In summary, MLIR is convenient for and closed under the kind of transformations needed to lower to general-purpose as well as specialized accelerators. It also allows one to build modular and reusable target independent and target dependent passes.
+## 设计决策
 
-## Design Decisions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#design-decisions)
+本节将介绍一些设计决策，其中一些是在规范文档中间接表明的。
 
-This section sheds light on some of the design decisions – some of these are indirectly implied by the specification document.
+### 加载和存储
 
-### Loads and stores [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#loads-and-stores)
+“load”和“store”指令是专门设计的，用于完全解析到memref的一个元素。这些指令以n+1个索引作为参数，用于操作n阶张量。这种设计禁止了类似于指针算术的操作，或者以其他方式对同一个memref进行索引（例如C语言中的数组就允许这样操作）。此外，对于仿射构造，编译器可以通过追踪use-def链（例如通过 [affine.apply 操作](https://mlir.llvm.org/docs/Dialects/Affine/#affineapply-affineapplyop) 或通过 [affine 操作](https://mlir.llvm.org/docs/Dialects/Affine/#operations) 的 map 属性），以在编译时使用多面体技术精确分析引用。由于[对维数和符号的限制](https://mlir.llvm.org/docs/Dialects/Affine/#restrictions-on-dimensions-and-symbols)，这一点成为可能。
 
-The ’load’ and ‘store’ instructions are specifically crafted to fully resolve to an element of a memref. These instructions take as arguments n+1 indices for an n-ranked tensor. This disallows the equivalent of pointer arithmetic or the ability to index into the same memref in other ways (something which C arrays allow for example). Furthermore, for the affine constructs, the compiler can follow use-def chains (e.g. through [affine.apply operations](https://mlir.llvm.org/docs/Dialects/Affine/#affineapply-affineapplyop) or through the map attributes of [affine operations](https://mlir.llvm.org/docs/Dialects/Affine/#operations)) to precisely analyze references at compile-time using polyhedral techniques. This is possible because of the [restrictions on dimensions and symbols](https://mlir.llvm.org/docs/Dialects/Affine/#restrictions-on-dimensions-and-symbols).
+存储在内存中的元素类型标量（基本类型或向量类型）被建模为 0维memref。这对于从函数中的 for 循环和 if 条件中取出的标量也是必要的，我们还没有为它们提供 SSA 表示，文档后面部分会描述一个[扩展](https://mlir.llvm.org/docs/Rationale/Rationale/#affineif-and-affinefor-extensions-for-escaping-scalars)来解决这个问题。
 
-A scalar of element-type (a primitive type or a vector type) that is stored in memory is modeled as a 0-d memref. This is also necessary for scalars that are live out of for loops and if conditionals in a function, for which we don’t yet have an SSA representation – [an extension](https://mlir.llvm.org/docs/Rationale/Rationale/#affineif-and-affinefor-extensions-for-escaping-scalars) to allow that is described later in this doc.
+### 符号和类型
 
-### Symbols and types [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#symbols-and-types)
+当前的 MLIR 不允许在类型中使用符号。例如，当张量或 memref 维度静态未知时，它在类型中表示为'?'。然后，在创建 memref 时，SSA 符号将绑定到它。未知维度的实际值可以使用 “dim ”内置函数查询，如下所示。
 
-The current MLIR disallows use of symbols in types. For example, when a tensor or memref dimension is statically unknown, it is denoted in the type as ‘?’. An SSA symbol is then bound to it when a memref is created. The actual value of the unknown dimension can be queried using the “dim” builtin as shown below.
-
-Example:
+示例：
 
 ```mlir
 func.func foo(...) {
@@ -79,9 +77,7 @@ func.func foo(...) {
 }
 
 func.func bar(%A : memref<8x?xf32, #lmap>) {
-  // Type of %A indicates that %A has dynamic shape with 8 rows
-  // and unknown number of columns. The number of columns is queried
-  // dynamically using dim instruction.
+  // %A 类型表示 %A 具有 8 行和未知列数的动态形状。列数可通过 dim 指令动态查询。
   %N = memref.dim %A, 1 : memref<8x?xf32, #lmap>
 
   affine.for %i = 0 to 8 {
@@ -96,154 +92,154 @@ func.func bar(%A : memref<8x?xf32, #lmap>) {
 }
 ```
 
-An alternative design is to embed the reference to symbols directly in the type - memref<8x%Nxf32>. We went for the current approach in MLIR because it simplifies the design — types remain immutable when the values of symbols change.
+另一种设计是直接在类型中嵌入对符号的引用，如memref<8x%Nxf32>。我们在 MLIR 中采用了当前的方法，因为它简化了设计，即当符号的值发生变化时，类型保持不可变。
 
-### 块参数与 PHI 节点
+### 块参数vsPHI节点
 
-MLIR Regions represent SSA using “ [block arguments](https://mlir.llvm.org/docs/LangRef/#blocks)” rather than [PHI instructions](http://llvm.org/docs/LangRef.html#i-phi) used in LLVM. This choice is representationally identical (the same constructs can be represented in either form) but block arguments have several advantages:
+MLIR Regions 使用“[块参数](https://mlir.llvm.org/docs/LangRef/#blocks)”来表示 SSA，而不是 LLVM 中使用的[PHI 指令](http://llvm.org/docs/LangRef.html#i-phi)。这种选择在表示上是相同的（相同的结构可以用任何一种形式表示），但块参数有几个优点：
 
-1. LLVM PHI nodes always have to be kept at the top of a block, and transformations frequently have to manually skip over them. This is defined away with BB arguments.
-2. LLVM has a separate function Argument node. This is defined away with BB arguments, because the arguments to the entry block serve this purpose.
-3. Blocks of PHI nodes in LLVM execute atomically, which is surprising and super confusing to compiler engineers and it is easy to introduce bugs with this (very related to the “ [lost copy](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.524.5461&rep=rep1&type=pdf)” problem in SSA lowering literature.) With the BB argument representation, this confusion is defined away.
-4. The entry list of PHI nodes in LLVM are unordered, and some blocks have thousands of predecessors (e.g. unwind blocks). This can cause long compile time problems because transformations have to linearly scan this list. This is defined away with BB argument representation.
-5. LLVM has no way to represent values that are available only in one successor but not the other, e.g. its invoke instruction cannot produce the exception value JUST on the exception edge. Instead, the [landingpad instruction](http://llvm.org/docs/LangRef.html#landingpad-instruction) is a hack used to represent this. MLIR doesn’t make use of this capability, but SIL uses it extensively, e.g. in the [switch_enum instruction](https://github.com/apple/swift/blob/main/docs/SIL.rst#switch-enum).
+1. LLVM PHI 节点始终必须保持在块的顶部，变换时经常需要手动跳过这些节点。这与 BB 参数的定义不同。
+2. LLVM 有一个单独的函数参数节点。这与 BB 参数的定义不同，因为入口块的参数就是为了这个目的。
+3. 在 LLVM 中，PHI 节点块以原子方式执行，这让编译器工程师感到惊讶和超级困惑，而且很容易引入 bug（与 SSA 降级文献中的“[丢失副本](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.524.5461&rep=rep1&type=pdf)”问题非常相关）。有了 BB 参数表示法，这种困惑就不复存在了。
+4. 在 LLVM 中，PHI 节点的条目列表是无序的，有些块有成千上万个前置块（如 unwind 块）。这会导致编译时间过长的问题，因为变换必须线性扫描该列表。而 BB 参数表示法就可以解决这个问题。
+5. LLVM 无法表示仅在一个后继项中可用而在另一个后继项中不可用的值，例如，其 invoke 指令无法只在异常边缘产生异常值，因此使用[landingpad 指令](http://llvm.org/docs/LangRef.html#landingpad-instruction)作为一种权宜之计来解决这个问题。MLIR 没有使用这一功能，但 SIL 却广泛使用了这一功能，例如在[switch_enum指令](https://github.com/apple/swift/blob/main/docs/SIL.rst#switch-enum)中。
 
-For more context, block arguments were previously used in the Swift [SIL Intermediate Representation](https://github.com/apple/swift/blob/main/docs/SIL.rst), and described in [a talk on YouTube](https://www.youtube.com/watch?v=Ntj8ab-5cvE). The section of interest [starts here](https://www.youtube.com/watch?v=Ntj8ab-5cvE&t=596s).
+为了了解更多情况，块参数以前在 Swift [SIL 中间表示法](https://github.com/apple/swift/blob/main/docs/SIL.rst) 中使用过，并在[YouTube 上的一个讲座](https://www.youtube.com/watch?v=Ntj8ab-5cvE)中做过介绍。感兴趣的部分[从这里开始](https://www.youtube.com/watch?v=Ntj8ab-5cvE&t=596s)。
 
-### Index type usage and limitations [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#index-type-usage-and-limitations)
+### 索引类型的使用和限制
 
-Index types are intended to be used for platform-specific “size” values and may appear in subscripts, sizes of aggregate types and affine expressions. They are also tightly coupled with `affine.apply` and affine.load/store operations; having `index` type is a necessary precondition of a value to be acceptable by these operations.
+索引类型旨在用于特定平台的“size”值，可能出现在下标、集合类型的大小和仿射表达式中。它们还与 `affine.apply` 和 affine.load/store 操作紧密耦合；具有 `index` 类型是这些操作可接受一个值的必要前提条件。
 
-We allow `index` types in tensors, vectors, and memrefs as a code generation strategy has to map `index` to an implementation type and hence needs to be able to materialize corresponding values. However, the target might lack support for `vector` values with the target specific equivalent of the `index` type.
+我们允许在张量、向量和 memrefs 中使用 `index` 类型，因为代码生成策略必须将 `index` 映射到实现类型，因此需要能够具体化相应的值。然而，目标平台可能不支持具有`index` 类型的目标特定的等价`vector`值。
 
-### Data layout of non-primitive types [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#data-layout-of-non-primitive-types)
+### 非基本类型的数据布局
 
-Data layout information such as the bit width or the alignment of types may be target and ABI-specific and thus should be configurable rather than imposed by the compiler. Especially, the layout of compound or `index` types may vary. MLIR specifies default bit widths for certain primitive *types*, in particular for integers and floats. It is equal to the number that appears in the type definition, e.g. the bit width of `i32` is `32`, so is the bit width of `f32`. The bit width is not *necessarily* related to the amount of memory (in bytes) or the register size (in bits) that is necessary to store the value of the given type. For example, `vector<3xi57>` is likely to be lowered to a vector of four 64-bit integers, so that its storage requirement is `4 x 64 / 8 = 32` bytes, rather than `(3 x 57) ceildiv 8 = 22` bytes as can be naively computed from the bit width. MLIR makes such [data layout information](https://mlir.llvm.org/docs/DataLayout/) configurable using attributes that can be queried during lowering, for example, when allocating a compound type.
+数据布局信息（如类型的位宽或对齐方式）可能是特定于目标和 ABI 的，因此应可配置，而不是由编译器强加。特别是，复合类型或 `index` 类型的布局可能会有所不同。MLIR 为某些基本类型指定了默认位宽，特别是整数和浮点数。它等于类型定义中出现的数字，例如 `i32` 的位宽是 `32`，`f32` 的位宽也是 `32`。位宽与存储给定类型的值所需的内存大小（以字节为单位）或寄存器大小（以位为单位）没有必然的关系。例如，`vector<3xi57>` 很可能被降级为一个包含 4 个 64 位整数的向量，因此其存储需求为`4 x 64 / 8 = 32`字节，而不是根据位宽天真地计算出的`(3 x 57) ceildiv 8 = 22`字节。MLIR 使这种[数据布局信息](https://mlir.llvm.org/docs/DataLayout/)可通过属性进行配置，这些属性可在降级过程中查询，例如在分配复合类型时。 
 
-The data layout of dialect-specific types is undefined at MLIR level. Yet dialects are free to define their own quantities and make them available via the data layout infrastructure.
+在MLIR这个层次上，对于特定方言的类型，其数据布局是没有定义的。但方言可以自由定义数量，并通过数据布局基础设施提供。
 
-### Integer signedness semantics [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#integer-signedness-semantics)
+### 整数符号语义
 
-Integers in the builtin MLIR type system have a bitwidth (note that the `index` type has a symbolic width equal to the machine word size), and they *may* additionally have signedness semantics. The purpose is to satisfy the needs of different dialects, which can model different levels of abstractions. Certain abstraction, especially closer to source language, might want to differentiate signedness with integer types; while others, especially closer to machine instruction, might want signless integers. Instead of forcing each abstraction to adopt the same integer modelling or develop its own one in house, Integer type provides this as an option to help code reuse and consistency.
+在内置的 MLIR 类型系统中，整数具有位宽（注意 `index` 类型的符号宽度等于机器字的大小），而且它们可能还具有符号语义。这样做的目的是为了满足不同方言的需要，它们可以模拟不同层次的抽象。某些抽象，尤其是更接近源语言的抽象，可能希望区分整数类型的符号性；而另一些抽象，尤其是更接近机器指令的抽象，可能希望使用无符号整数。整数类型没有强迫每种抽象采用相同的整数模型或自行开发整数模型，而是提供了一个选项，以帮助代码的重用和一致性。
 
-For the standard dialect, the choice is to have signless integer types. An integer value does not have an intrinsic sign, and it’s up to the specific op for interpretation. For example, ops like `arith.addi` and `arith.muli` do two’s complement arithmetic, but some other operations get a sign, e.g. `arith.divsi` vs `arith.divui`.
+对于标准方言来说，可以选择无符号整数类型。整数值没有内置符号，由特定的操作来解释。例如，像`arith.addi`和`arith.muli`这样的运算会进行二进制补码运算，但其他一些运算会需要符号，如`arith.divsi`和`arith.divui`。
 
-LLVM uses the [same design](http://llvm.org/docs/LangRef.html#integer-type), which was introduced in a revamp rolled out [in the LLVM 2.0 integer type](http://releases.llvm.org/2.0/docs/LangRef.html#t_derived). Prior to that, from [LLVM 1.0](http://releases.llvm.org/1.0/docs/LangRef.html#t_classifications) to [1.9](http://releases.llvm.org/1.9/docs/LangRef.html#t_classifications), LLVM uses signed types like “sbyte” and “ubyte”. This shift was important and has served LLVM well over the years. The reason this is important is that it is a good thing for an intermediate representation to represent the same computation with the same instruction. Signed types got in the way, because (e.g.) an “add of an sbyte” does the same computation as an “add of a ubyte”, but the type system made them look artificially different. This split also required casts like “cast from sbyte to ubyte” which do nothing at the machine level. Removing signs from the type system eliminated these problems, making the compiler simpler.
+LLVM 使用[相同的设计](http://llvm.org/docs/LangRef.html#integer-type)，这是在[LLVM 2.0 整数类型](http://releases.llvm.org/2.0/docs/LangRef.html#t_derived)中推出的改版中引入的。在此之前，从[LLVM 1.0](http://releases.llvm.org/1.0/docs/LangRef.html#t_classifications)到[1.9](http://releases.llvm.org/1.9/docs/LangRef.html#t_classifications)，LLVM 使用带符号类型，如“sbyte”和“ubyte”。这一转变非常重要，多年来为 LLVM 提供了良好的服务。之所以重要，是因为中间表示法用相同的指令表示相同的计算是一件好事。带符号的类型碍手碍脚，因为（例如）“sbyte的加法”与“ubyte的加法”执行的是相同的计算，但类型系统却人为地将它们拆分开来。这种拆分还需要像“cast from sbyte to ubyte”这样的转换，而这在机器级别不做任何事情。从类型系统中移除符号后，这些问题都迎刃而解，编译器也变得更加简单。
 
-More information about this split is available in an old [talk on youtube](https://www.youtube.com/watch?v=VeRaLPupGks) talking about LLVM 2.0.
+关于这一拆分的更多信息，请参阅这个谈论 LLVM 2.0 的旧讲座[talk on youtube](https://www.youtube.com/watch?v=VeRaLPupGks)。
 
-Note that this rationale only applies to the “standard ops” dialect in which we can express an opinion about its design. Other dialects generally try to model an external system, and should aim to reflect its design as closely as possible.
+请注意，这一原理仅适用于“标准操作”方言，在这种方言中，我们可以对其设计发表意见。其他方言通常试图模拟外部系统，因此应尽可能地反映其设计。
 
-### Splitting floating point vs integer operations [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#splitting-floating-point-vs-integer-operations)
+### 拆分浮点操作与整数操作
 
-The MLIR “Arith” dialect splits many integer and floating point operations into different categories, for example `arith.addf` vs `arith.addi` and `arith.cmpf` vs `arith.cmpi` ( [following the design of LLVM](http://llvm.org/docs/LangRef.html#binary-operations)). These instructions *are* polymorphic on the number of elements in the type though, for example `addf` is used with scalar floats, vectors of floats, and tensors of floats (LLVM does the same thing with its scalar/vector types).
+MLIR的“Arith”方言将许多整数和浮点运算分成不同的类别，例如`arith.addf` vs `arith.addi`和`arith.cmpf` vs `arith.cmpi`（[沿用LLVM的设计](http://llvm.org/docs/LangRef.html#binary-operations)）。不过，这些指令在类型中的元素数量上是多态的，例如 `addf` 可用于标量浮点数、浮点数向量和浮点数张量（LLVM 对其标量/向量类型也做了同样的处理）。
 
-This split is important because floating point and integer operations are quite different in practice: for example, floating point values include NaN’s, so [integer comparisons](http://llvm.org/docs/LangRef.html#icmp-instruction) and [floating point comparisons](http://llvm.org/docs/LangRef.html#fcmp-instruction) should use different comparison opcodes. On the arithmetic side of things, floating point operations support rounding modes, floating point contractions, [“fast math”](http://llvm.org/docs/LangRef.html#fadd-instruction), and integers may want to have two’s complement overflow behavior or be undefined on [various forms of wrapping](http://llvm.org/docs/LangRef.html#add-instruction) for performance.
+这种拆分非常重要，因为浮点运算和整数运算在实践中有很大不同：例如，浮点值包括 NaN，因此[整数比较](http://llvm.org/docs/LangRef.html#icmp-instruction)和[浮点数比较](http://llvm.org/docs/LangRef.html#fcmp-instruction)应使用不同的比较操作码。在算术方面，浮点运算支持舍入模式、浮点收缩、[“fast math”](http://llvm.org/docs/LangRef.html#fadd-instruction)，而整数运算可能希望支持二进制补码溢出行为，或者在[各种形式的溢出](http://llvm.org/docs/LangRef.html#add-instruction)时行为未定义，以提高性能。
 
-We are a long way from this sort of thing being a priority to care about in MLIR, but since we have experience and know the right way to do this, we’d rather design it in from the beginning.
+在 MLIR 中，我们还远远没有优先考虑这类问题，但既然我们有经验并知道正确的方法，我们宁愿从一开始就设计好它。
 
-Note that this rationale only applies to the “standard ops” dialect in which we can express an opinion about its design. Other dialects generally try to model an external system, and should aim to reflect its design as closely as possible.
+请注意，这一原理只适用于“标准操作”方言，我们可以在其中表达对其设计的看法。其他方言通常试图模拟外部系统，因此应尽可能地反映其设计。
 
-### Specifying sign in integer comparison operations [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#specifying-sign-in-integer-comparison-operations)
+### 在整数比较操作中指定符号
 
-Since integers are [signless](https://mlir.llvm.org/docs/Rationale/Rationale/#integer-signedness-semantics), it is necessary to define the sign for integer comparison operations. This sign indicates how to treat the foremost bit of the integer: as sign bit or as most significant bit. For example, comparing two `i4` values `0b1000` and `0b0010` yields different results for unsigned (`8 > 3`) and signed (`-8 < 3`) interpretations. This difference is only significant for *order* comparisons, but not for *equality* comparisons. Indeed, for the latter all bits must have the same value independently of the sign. Since both arguments have exactly the same bit width and cannot be padded by this operation, it is impossible to compare two values whose bit representations would differ while the values are interpreted as equal.
+由于整数是[无符号](https://mlir.llvm.org/docs/Rationale/Rationale/#integer-signedness-semantics)，因此有必要为整数比较运算定义符号。这个符号表示如何处理整数的最前位：视为符号位或最高有效位。例如，比较两个 `i4` 值 `0b1000` 和 `0b0010`，在无符号（`8 > 3`）和有符号（`-8 < 3`）解释中会产生不同的结果。这种差异只对顺序比较有意义，而对于相等比较没有意义。事实上，对于后者，所有位都必须具有相同的值，而与符号无关。由于两个参数的位宽完全相同，且该操作无法对它们进行填充，因此无法比较两个位表示不同但在解释上被视作相等的值。
 
-### Specifying comparison kind as attribute [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#specifying-comparison-kind-as-attribute)
+### 将比较类型指定为属性
 
-Unlike arithmetic, comparison operators share several common properties, e.g. they cannot be considered associative. In practice, comparisons are sometimes implemented by the same instruction or its variants so it makes sense to group them together at the IR level.
+与算术运算不同，比较运算符有几个共同的属性，例如，它们不能被视为结合运算符。在实践中，比较运算有时由同一指令或其变体实现，因此在 IR 级别将它们归为一类是合理的。
 
-An alternative would be introducing ten distinct operators for all currently supported kinds of integer comparisons. These operators would have increased the number of “reserved” names used by standard operations as well as the size of the C++ API while their implementations would have been mostly identical.
+另一种方法是为目前支持的所有整数比较类型引入 10 个不同的运算符。这些运算符将增加标准操作中使用的“保留”名称的数量以及 C++ API的大小，而它们的实现却基本相同。
 
-The comparison kind is internally an integer attribute. However, for the sake of readability by humans, custom assembly form accepts string literals that are mapped to the underlying integer values: `cmpi "eq", %lhs, %rhs` better implies integer equality comparison than `cmpi 0, %lhs, %rhs` where it is unclear what gets compared to what else. This syntactic sugar is possible thanks to parser logic redefinitions for custom assembly form of non-builtin operations. Supporting it in the full notation would have required changing how the main parsing algorithm works and may have unexpected repercussions. While it had been possible to store the predicate as string attribute, it would have rendered impossible to implement switching logic based on the comparison kind and made attribute validity checks (one out of ten possible kinds) more complex.
+比较类型在内部是一个整数属性。不过，为了便于人类阅读，自定义汇编形式接受映射为底层整数值的字符串字面量：与 `cmpi 0, %lhs, %rhs` 相比，`cmpi “eq”, %lhs, %rhs` 更好地表示了整数相等比较，因为在前者中不清楚比较的是什么。这种语法糖之所以成为可能，要归功于对非内置操作的自定义汇编形式进行的解析器逻辑重新定义。如果要以完整表示法支持它，就必须改变主解析算法的工作方式，而且可能会产生意想不到的影响。虽然可以将谓词存储为字符串属性，但这将导致无法实现基于比较类型的切换逻辑，并使属性有效性检查（十种可能类型中的一种）变得更加复杂。
 
-### Regions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#regions)
+### 区域
 
-#### Attributes of type ‘Block’ [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#attributes-of-type-block)
+#### “Block”类型的属性
 
-We considered representing regions through `ArrayAttr`s containing a list of a special type `IRBlockAttr`, which in turn would contain a list of operations. All attributes in MLIR are unique’d within the context, which would make the IR inside the regions immortal for no good reason.
+我们考虑通过 `ArrayAttr` 表示区域，其中包含一个特殊类型`IRBlockAttr`的列表，而 `IRBlockAttr` 又包含一个操作作列表。MLIR 中的所有属性在上下文中都是唯一的，这将使区域内的 IR 无缘无故地变得无法销毁。
 
-#### Use “inlined” functions as regions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#use-inlined-functions-as-regions)
+#### 使用“inlined”函数作为区域
 
-We considered attaching a “force-inline” attribute on a function and/or a function `call` operation. Even the minimal region support (use cases in affine.for and affine.if existing before the regions) requires access to the values defined in the dominating block, which is not supported by functions. Conceptually, function bodies are instances of regions rather than the inverse; regions can also be device kernels, alternative sections, etc.
+我们考虑过在函数和/或函数 `call` 操作上附加“force-inline”属性。即使是最小的区域支持（affine.for 和 affine.if 中的用例存在于区域之前）也需要访问支配块中定义的值，而函数不支持这一点。从概念上讲，函数体是区域的实例，而不是反过来；区域也可以是设备内核、替代部分等。
 
-#### Dedicated `region` operation [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#dedicated-region-operation)
+#### 专用`region`操作
 
-This would mean we have a special kind of operation that is allowed to have regions while other operations are not. Such distinction is similar to the Stmt/Op difference we have had and chose to remove to make the IR simpler and more flexible. It would also require analyses and passes to consider the interplay between operations (e.g., an `affine.for` operation must be followed by a region operation). Finally, a region operation can be introduced using the current implementation, among other operations and without being special in any sense.
+这意味着我们有一种特殊的操作，它允许有区域，而其他操作则不允许。这种区别类似于 Stmt/Op 的区别，我们已经取消了这种区别，以使 IR 更简单、更灵活。它还需要分析和passes来考虑操作之间的相互作用（例如，`affine.for`操作之后必须有一个区域操作）。最后，使用当前的实现方式，可以在其他操作中引入区域操作，并且区域操作无需在任何意义上进行特殊处理。
 
-#### Explicit capture of the values used in a region [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#explicit-capture-of-the-values-used-in-a-region)
+####  显式捕获区域中使用的值
 
-Being able to use values defined outside the region implies that use-def chains may contain uses from different nested regions. Consequently, IR transformations and analyses can pull the instruction defining the value across region boundaries, for example in case of TableGen-defined canonicalization patterns. This would not be the case if all used values had been passed as region arguments. One of the motivations for introducing regions in the IR is precisely to enable cross-region analyses and transformations that are simpler than inter-procedural transformations. Having uses from different regions appear in the same use-def chain, contrary to an additional data structure maintaining correspondence between function call arguments as uses of the original definitions and formal arguments as new definitions, enables such simplification. Since individual operations now belong to blocks, which belong to regions, it is always possible to check if the definition of the value belongs to the same region as its particular use. The risk is that any IR traversal will need to handle explicitly this situation and it is easy to forget a check (or conversely it isn’t easy to design the right check in a tablegen pattern for example): traversing use-def chains potentially crosses implicitly semantic barriers, making it possible to unknowingly break region semantics. This is expected to be caught in the verifier after the transformation.
+能够使用在区域外定义的值意味着 use-def 链可能包含来自不同嵌套区域的使用。因此，IR 变换和分析可以跨区域边界提取定义值的指令，例如在 TableGen 定义的规范化模式中。如果所有使用的值都作为区域参数传递，就不会出现这种情况。在 IR 中引入区域的动机之一，正是为了实现比程序间变换更简单的跨区域分析和变换。让来自不同区域的use出现在同一个ues-def链中，而不是通过一个额外的数据结构来维护函数调用参数（作为原始定义的use）和形式参数（作为新定义的use）之间的对应关系，可以实现这种简化。由于单个操作现在属于块，而块又属于区域，因此总是可以检查值的定义是否与其特定使用属于同一区域。这样做的风险在于，任何 IR 遍历都需要显式处理这种情况，而且很容易忘记检查（或者反过来说，例如在tablegen模式中设计正确的检查并不容易）：遍历use-def链可能会隐式跨越语义障碍，从而有可能在不知情的情况下破坏区域语义。这种情况有望在变换后被验证器捕捉到。
 
-At the same time, one may choose to pass certain or all values as region arguments to explicitly break the use-def chains in the current proposal. This can be combined with an attribute-imposed semantic requirement disallowing the body of the region to refer to any value from outside it.
+同时，我们可以选择将某些或所有值作为区域参数传递，以显式打破当前提案中的use-def链。这可以与属性强制语义要求相结合，禁止区域主体引用区域外的任何值。
 
-### Dialect type extensions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#dialect-type-extensions)
+### 方言类型扩展
 
-This section describes the design decisions that shaped the dialect extensible type system present in MLIR.
+本节描述了 MLIR 中方言可扩展类型系统的设计决策。
 
-#### Interactions between dialects [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#interactions-between-dialects)
+#### 方言之间的交互
 
-There are two different interactions between dialects that are important to understand. When types of a dialect are:
+理解方言之间有两种不同的交互是很重要的。当一种方言的类型：
 
-- In operations of other dialects
-  - For standard/builtin operations, only builtin types are allowed. This restriction allows for operations to clearly understand the invariants that they are working under.
-  - Outside of standard/builtin operations, dialects are expected to verify the allowable operation types per operation.
-- In types of other dialects
-  - For builtin types, these types are allowed to contain types from other dialects. This simplifies the type system and removes the need for dialects to redefine all of the builtin aggregate types, e.g. tensor, as well as the memref type. Dialects are expected to verify that a specific type is valid within a builtin type, e.g. if a type can be an element of a tensor.
-  - For dialect types, the dialect is expected to verify any type invariants, e.g. if the tensor type can contain a specific type of that dialect.
+- 在其他方言的操作中
+  - 对于标准/内置操作，只允许使用内置类型。通过这一限制，操作可以清楚地了解它们正在处理的不变量。
+  - 在标准/内置操作之外，方言应验证每个操作允许的操作类型。
+- 在其他方言的类型中
+  - 对于内置类型，允许这些类型包含来自其他方言的类型。这简化了类型系统，使方言无需重新定义所有内置聚合类型（如张量和 memref 类型）。方言应验证特定类型在内置类型中是否有效，例如，类型是否可以是张量的元素。
+  - 对于方言类型，方言应验证任何类型的不变量，例如，张量类型是否可以包含该方言的特定类型。
 
-#### Separating builtin and standard types [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#separating-builtin-and-standard-types)
+#### 分离内置类型和标准类型
 
-Following the separation between the built-in and standard dialect, it makes sense to separate built-in types and standard dialect types. Built-in types are required for the validity of the IR itself, e.g. the function type (which appears in function signatures and generic assembly forms of operations). Integer, float, vector, memref and tensor types, while important, are not necessary for IR validity.
+在将内置方言和标准方言分开之后，分离内置类型和标准方言类型也是合理的。内置类型是 IR 本身的有效性所必需的，例如函数类型（出现在函数签名和操作的通用装配形式中）。整数、浮点数、向量、memref 和张量类型虽然重要，但不是 IR 有效性所必需的。
 
-#### Unregistered types [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#unregistered-types)
+#### 未注册的类型
 
-MLIR supports unregistered operations in generic assembly form. MLIR also supports a similar concept for types. When parsing, if the dialect for dialect type has not been registered the type is modeled as an ‘OpaqueType’. This allows for types to be round-tripped without needing to link in the dialect library that defined them. No additional information about opaque types, outside of parsing/printing, will be available.
+MLIR 支持通用装配形式的未注册操作。MLIR 也支持类型的类似概念。解析时，如果方言类型的方言尚未注册，则该类型将被建模为“OpaqueType”。这样就可以在不需要链接定义这些类型的方言库的情况下对类型进行往返处理。除解析/打印外，将不提供有关不透明类型的其他信息。
 
-#### Dialect type syntax [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#dialect-type-syntax)
+#### 方言类型语法
 
-Dialect extended types are represented as string literals wrapped inside of the dialect namespace. This means that the parser delegates to the dialect for parsing specific type instances. This differs from the representation of dialect defined operations, of which have an identifier name that the parser uses to identify and parse them.
+方言扩展类型表示为包装在方言命名空间内的字符串字面量。这意味着解析器委托给方言来解析特定的类型实例。这与方言定义的操作的表示不同，方言定义的操作有一个标识符名称，解析器用它来识别和解析这些操作。
 
-This representation was chosen for several reasons:
+选择这种表示法有几个原因：
 
-##### Dialects must provide custom type parsers [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#dialects-must-provide-custom-type-parsers)
+##### 方言必须提供自定义类型解析器
 
-Dialect type parsing cannot plug into the existing parser infrastructure as operations do with the OpAsmParser/Printer. Operations have a defined syntax structure that is the same across all dialects. Types, on the other hand, may have many different, and sometimes conflicting, parsing constraints that would be difficult/unmaintainable to provide within a single interface.
+方言类型解析无法插入到现有的解析器基础设施中，就像操作使用OpAsmParser/Printer那样。操作有一个定义的语法结构，在所有方言中都是一样的。另一方面，类型可能有许多不同的、有时甚至是相互冲突的解析约束，很难/无法在单一接口中提供这些约束。
 
-This also has the added benefit of encouraging dialects to reuse existing external type parsers. For example, an LLVM dialect may provide an MLIR LLVM type that is simply a wrapper around LLVM types. The LLVM dialect would then use the existing LLVM type parsing infrastructure.
+这样做的另一个好处是鼓励方言重用现有的外部类型解析器。例如，LLVM 方言可能提供一种 MLIR LLVM 类型，它只是 LLVM 类型的一个包装器。然后，LLVM 方言将使用现有的 LLVM 类型解析基础设施。
 
-Example:
+示例：
 
 ```mlir
 %s = "foo"() : () -> !llvm<"i32*">
 ```
 
-##### Types do not always have canonical names [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#types-do-not-always-have-canonical-names)
+##### 类型并不总是有规范名称
 
-Unlike operations, types generally do not have a formal canonical name. For example, function types have no defined keyword and integer types are defined by a regular expression to support arbitrary bitwidth. Dialects with existing type systems, e.g. LLVM, are likely to provide wrappers around their existing type systems. For these wrapper types there is no simple canonical name, it’s logical to think of these types as existing within the namespace of the dialect. If a dialect wishes to assign a canonical name to a type, it can be done via [type aliases](https://mlir.llvm.org/docs/LangRef/#type-aliases).
+与操作不同，类型通常没有正式的规范名称。例如，函数类型没有定义的关键字，整数类型由正则表达式定义，支持任意位宽。具有现有类型系统的方言（如 LLVM）可能会为其现有类型系统提供包装器。对于这些包装器类型，没有简单的规范名称，将这些类型视为存在于方言的命名空间中是合乎逻辑的。如果方言希望为类型指定一个规范名称，可以通过[类型别名](https://mlir.llvm.org/docs/LangRef/#type-aliases)来实现。
 
-### Tuple types [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#tuple-types)
+### 元组类型
 
-The MLIR type system provides first class support for defining [tuple types](https://mlir.llvm.org/docs/Dialects/Builtin/#tupletype). This is due to the fact that `Tuple` represents a universal concept that is likely to, and has already begun to, present itself in many different dialects. Though this type is first class in the type system, it merely serves to provide a common mechanism in which to represent this concept in MLIR. As such, MLIR provides no standard operations for interfacing with `tuple` types. It is up to dialect authors to provide operations, e.g. extract_tuple_element, to interpret and manipulate them. When possible, operations should prefer to use multiple results instead. These provide a myriad of benefits, such as alleviating any need for tuple-extract operations that merely get in the way of analysis and transformation.
+MLIR 类型系统为定义[元组类型](https://mlir.llvm.org/docs/Dialects/Builtin/#tupletype)提供了一流的支持。这是因为 `Tuple` 代表了一个通用概念，它可能而且已经开始在许多不同的方言中出现。虽然这种类型在类型系统中是一等的，但它仅用于在 MLIR 中提供一种表示这一概念的通用机制。因此，MLIR 没有提供与 `tuple` 类型交互的标准操作。这由方言作者提供的操作来解释和操纵它们，例如 extract_tuple_element。在可能的情况下，操作应优先使用多重结果。这样做有很多好处，比如可以减少对元组提取操作的需求，因为这些操作只会妨碍分析和变换。
 
-### Assembly forms [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#assembly-forms)
+### 装配形式
 
-MLIR decides to support both generic and custom assembly forms under the following considerations:
+基于以下考虑，MLIR 决定同时支持通用和自定义装配形式：
 
-MLIR is an open system; it is designed to support modular and pluggable dialects. Depending on whether there exists a corresponding dialect and whether the dialect is plugged in, operations may or may not be registered into MLIR system. Yet we still need a way to investigate these operations. So the generic assembly form is mandated by this aspect of MLIR system. It provides a default textual form for operations.
+MLIR 是一个开放的系统；它旨在支持模块化和可插拔的方言。根据是否存在相应的方言以及该方言是否被插入，操作可能会也可能不会被注册到 MLIR 系统中。然而，我们仍然需要一种方法来研究这些操作。因此，MLIR 系统在这方面要求使用通用装配形式。它为操作提供了默认的文本形式。
 
-On the other hand, an assembly form is for assisting developers to investigate the IR. The generic form serves as a safe fallback but it can be too verbose for certain ops. Therefore, MLIR gives each dialect the choice to define a custom assembly form for each operation according to the operation’s semantics and specific needs. The custom assembly form can de-duplicate information from the operation to derive a more concise form, thus better facilitating the comprehension of the IR.
+另一方面，装配形式可以帮助开发人员研究IR。通用形式是一种安全的后备方案，但对于某些操作来说可能过于冗长。因此，MLIR 允许每个方言根据操作的语义和特定需求，为每个操作定义自定义装配形式。自定义装配形式可以去掉操作中的重复信息，生成更简洁的形式，从而更好地促进对 IR 的理解。
 
-## Examples [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#examples)
+## 示例
 
-This section describes a few very simple examples that help understand how MLIR represents computation.
+本节介绍几个非常简单的示例，帮助理解 MLIR 如何表示计算。
 
-### Non-affine control flow [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#non-affine-control-flow)
+### 非仿射控制流
 
 ```mlir
-// A simple linear search in every row of a matrix
+// 在矩阵的每一行中进行简单的线性搜索
 for (i = 0; i < N; i++) {
   for (j = 0; j < N; j++) {
-    // dynamic control flow
+    // 动态控制流
     if (a[i][j] == key) {
       s[i] = j;
       break;
@@ -252,12 +248,12 @@ for (i = 0; i < N; i++) {
 }
 ```
 
-The presence of dynamic control flow leads to an inner non-affine function nested in an outer function that uses affine loops.
+动态控制流的存在会导致内部非仿射函数嵌套在使用仿射循环的外部函数中。
 
 ```mlir
 func.func @search(%A: memref<?x?xi32>, %S: <?xi32>, %key : i32) {
   %ni = memref.dim %A, 0 : memref<?x?xi32>
-  // This loop can be parallelized
+  // 这个循环可以并行化
   affine.for %i = 0 to %ni {
     call @search_body (%A, %S, %key, %i) : (memref<?x?xi32>, memref<?xi32>, i32, i32)
   }
@@ -290,19 +286,19 @@ func.func @search_body(%A: memref<?x?xi32>, %S: memref<?xi32>, %key: i32, %i : i
 }
 ```
 
-As per the [MLIR spec](https://mlir.llvm.org/docs/LangRef/), the restrictions on dimensions and symbol identifiers to be used with the affine.apply operation only apply to accesses inside `affine.for` and `affine.if` operations. However, an analysis of accesses inside the called function (`@search_body`) is necessary to determine if the `%i` loop could be parallelized: such function access analysis is calling context sensitive.
+根据[MLIR 规范](https://mlir.llvm.org/docs/LangRef/)，affine.apply 操作对维度和符号标识符的限制仅适用于 `affine.for` 和 `affine.if` 操作内部的访问。但是，有必要对被调用函数 (`@search_body`) 内部的访问进行分析，以确定 `%i` 循环是否可以并行化：这种函数访问分析对调用上下文敏感。
 
-### Non-affine loop bounds [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#non-affine-loop-bounds)
+### 非仿射循环边界
 
-Loop bounds that are not affine lead to a nesting of functions as shown below.
+非仿射循环边界会导致函数嵌套，如下所示。
 
 ```c
 for (i = 0; i < N; i++)
   for (j = 0; j < N; j++)
-    // Non-affine loop bound for k loop.
+    // 非仿射循环边界，用于 k 循环。
     for (k = 0; k < pow(2, j); k++)
        for (l = 0; l < N; l++) {
-        // block loop body
+        // 阻塞循环体
         ...
        }
 func.func @outer_nest(%n : index) {
@@ -325,18 +321,18 @@ func.func @inner_nest(%m : index, %n : index) {
 }
 ```
 
-### Reference 2D Convolution [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#reference-2d-convolution)
+### 2D卷积参考实现
 
-The following example illustrates a reference implementation of a 2D convolution, which uses an integer set `#domain` to represent valid input data in a dilated convolution.
+下面的示例说明了二维卷积的参考实现，它使用整数集 `#domain` 表示膨胀卷积中的有效输入数据。
 
 ```mlir
-// Dilation factors S0 and S1 can be constant folded if constant at compile time.
+// 如果膨胀因子S0和S1在编译时是常量，那么它们可以进行常量折叠。
 #domain = (d0, d1)[S0,S1,S2,S3]: (d0 % S0 == 0, d1 % S1 == 0, d0 >= 0, d1 >= 0,
                                    S3 - d0 - 1 >= 0, S4 - d1 - 1 >= 0)
-// Identity map (shown here for illustration).
+// Identity map（此处仅作说明）。
 #map0 = (d0, d1, d2, d3, d4, d5, d6) -> (d0, d1, d2, d3, d4, d5, d6)
 
-// Affine map from output to input coordinate space.
+// 从输出坐标空间到输入坐标空间的仿射映射。
 // d0 = output_h, d1 = output_w, d2 = kernel_h, d3 = kernel_w
 // S0 = h_stride, S1 = w_stride, S2 = h_kernel_dilation, S3 = w_kernel_dilation
 // S4 = h_pad_low, S5 = w_pad_low
@@ -345,7 +341,7 @@ The following example illustrates a reference implementation of a 2D convolution
 #map1_0 = (d0, d1, d2, d3) [S0, S1, S2, S3, S4, S5] -> (d0 * S0 + d2 * S2 - %S4)
 #map1_1 = (d0, d1, d2, d3) [S0, S1, S2, S3, S4, S5] -> (d1 * S1 + d3 * S3 - %S5)
 
-// Semi-affine map to undilated input coordinate space.
+// 半仿射映射到未扩张的输入坐标空间。
 // d0 = input_h, d1 = input_w, S0 = h_base_dilation, S1 = w_base_dilation.
 #map2_0 = (d0, d1) [S0, S1] -> (d0 / S0)
 #map2_1 = (d0, d1) [S0, S1] -> (d1 / S1)
@@ -364,7 +360,7 @@ func.func @conv2d(%input: memref<16x1024x1024x3xf32, #lm0, /*scratchpad=*/1>,
           affine.for %kh = 0 to %kernel_height {
             affine.for %kw = 0 to %kernel_width {
               affine.for %if = 0 to %input_feature {
-                // Calculate input indices.
+                // 计算输入索引。
                 %1_0 = affine.apply #map1_0 (%0#1, %0#2, %0#4, %0#5)
                   [%h_stride, %w_stride, %h_kernel_dilation, %w_kernel_dilation,
                    %h_pad_low, %w_pad_low]
@@ -372,7 +368,7 @@ func.func @conv2d(%input: memref<16x1024x1024x3xf32, #lm0, /*scratchpad=*/1>,
                   [%h_stride, %w_stride, %h_kernel_dilation, %w_kernel_dilation,
                    %h_pad_low, %w_pad_low]
 
-                // Check if access is not in padding.
+                // 检查访问是否不在padding中。
                 affine.if #domain(%1_0, %1_1)
                                        [%h_base_dilation, %w_kernel_dilation, %h_bound, %w_bound] {
                   %2_0 = affine.apply #map2 (%1_0, %1_1)
@@ -391,34 +387,34 @@ func.func @conv2d(%input: memref<16x1024x1024x3xf32, #lm0, /*scratchpad=*/1>,
 }
 ```
 
-TODO: (Add more examples showing the IR for a variety of interesting cases)
+TODO: （添加更多示例，展示各种有趣情况下的 IR）
 
-## Design alternatives and extensions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#design-alternatives-and-extensions)
+## 设计备选方案和扩展
 
-This is a list of some design alternatives and extensions that we discussed in detail but did not include in the spec or postponed them for future consideration on demand. We will revisit these discussions when we have more implementation experience and learn more about the challenges and limitations of our current design in practice.
+这是我们详细讨论过的一些设计备选方案和扩展的列表，这些方案和扩展没有包含在规范中，或推迟它们以备将来按需考虑。当我们有了更多的实现经验，并进一步了解我们的当前设计在实践中面临的挑战和局限时，我们将重新讨论这些问题。
 
-### Polyhedral code representation alternatives: schedule lists vs schedules trees vs affine loop/if forms [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#polyhedral-code-representation-alternatives-schedule-lists-vs-schedules-trees-vs-affine-loopif-forms)
+### 多面体代码表示替代方案：调度表vs调度树vs仿射循环/if形式
 
-The current MLIR uses a representation of polyhedral schedules using a tree of if/for loops. We extensively debated the tradeoffs involved in the typical unordered polyhedral instruction representation (where each instruction has multidimensional schedule information), discussed the benefits of schedule tree forms, and eventually decided to go with a syntactic tree of affine if/else conditionals and affine for loops. Discussion of the tradeoff was captured in this document: [MLIR: The case for a simplified polyhedral form](https://mlir.llvm.org/docs/Rationale/RationaleSimplifiedPolyhedralForm/).
+当前的 MLIR 使用 if/for 循环树来表示多面体调度。我们广泛讨论了典型的无序多面体指令表示法（其中每条指令都有多维调度信息）所涉及的权衡问题，讨论了调度树形式的好处，最终决定采用仿射 if/else 条件和仿射 for 循环的语法树。有关权衡的讨论记录在本文档中：[MLIR：简化多面体形式的案例](https://mlir.llvm.org/docs/Rationale/RationaleSimplifiedPolyhedralForm/)。
 
-At a high level, we have two alternatives here:
+在高层次上，我们有两种选择：
 
-1. Schedule tree representation instead of an affine loop AST form: The current proposal uses an affine loop and conditional tree form, which is syntactic and with no separation of domains as sets and schedules as multidimensional affine functions. A schedule tree form however makes polyhedral domains and schedules a first class concept in the IR allowing compact expression of transformations through the schedule tree without changing the domains of instructions. Such a representation also hides prologues, epilogues, partial tiles, complex loop bounds and conditionals making loop nests free of “syntax”. Cost models instead look at domains and schedules. In addition, if necessary such a domain schedule representation can be normalized to explicitly propagate the schedule into domains and model all the cleanup code. An example and more detail on the schedule tree form is in the next section.
-2. Having two different forms of “affine regions”: an affine loop tree form and a polyhedral schedule tree form. In the latter, ops could carry attributes capturing domain, scheduling, and other polyhedral code generation options with IntegerSet, AffineMap, and other attributes.
+1. 调度树表示法，而不是仿射循环 AST 形式：目前的提案使用仿射循环和条件树形式，这是一种语法形式，没有将作为集合的域和作为多维仿射函数的调度分开。然而，调度树形式使多面体域和调度成为IR中的一等概念，从而可以在不改变指令域的情况下，通过调度树紧凑地表达变换。这种表示法还隐藏了开始、结束、部分平铺、复杂循环边界和条件语句，使循环嵌套摆脱了“语法”的束缚。代价模型则着眼于域和调度。此外，如果有必要，还可以将这种域调度表示法规范化，以显式地将调度传播到域中，并对所有清理代码进行建模。下一节将举例说明调度树形式的更多细节。
+2. 拥有两种不同形式的“仿射区域”：仿射循环树形式和多面体调度树形式。在后者中，操作可以携带属性捕获域、调度和其他带有 IntegerSet、AffineMap 以及其他属性的多面体代码生成选项。
 
-#### Schedule Tree Representation for Affine Regions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#schedule-tree-representation-for-affine-regions)
+#### 仿射区域的调度树表示
 
-This representation is based on a simplified form of the domain/schedule representation used by the polyhedral compiler community. Domains represent what has to be executed while schedules represent the order in which domain elements are interleaved. We model domains as non-piece-wise convex integer sets, and schedules as affine functions; however, the former can be disjunctive, and the latter can be piece-wise affine relations. In the schedule tree representation, domain and schedules for instructions are represented in a tree-like structure which is called a schedule tree. Each non-leaf node of the tree is an abstract polyhedral dimension corresponding to an abstract fused loop for each ML instruction that appears in that branch. Each leaf node is an ML Instruction.
+该表示法基于多面体编译器社区使用的域/调度表示法的简化形式。域表示必须执行的内容，而调度表示域元素交错的顺序。我们将域建模为非分段凸整数集合，将调度建模为仿射函数；不过，前者可以是析取关系，后者可以是分段仿射关系。在调度树表示法中，指令的域和调度用树状结构表示，这种结构称为调度树。树的每个非叶节点都是一个抽象多面体维度，对应于该分支中出现的每条 ML 指令的抽象融合循环。每个叶节点都是一条 ML 指令。
 
 ```mlir
-// A tiled matmul code (128x128x128) represented in schedule tree form
+// 以调度树形式表示的分块 Matmul 代码（128x128x128）
 
 // #map0 = (d0, d1, d2, d3, d4, d5) -> (128*d0 + d3, 128*d1 + d4, 128*d2 + d5)
 #intset_ij = (i, j) [M, N, K]  : i >= 0, -i + N - 1 >= 0, j >= 0, -j + N-1 >= 0
 #intset_ijk = (i, j, k) [M, N, K] : i >= 0, -i + N - 1 >= 0, j >= 0,
                                      -j +  M-1 >= 0, k >= 0, -k + N - 1 >= 0)
 func.func @matmul(%A, %B, %C, %M, %N, %K) : (...)  { // %M, N, K are symbols
-  // t1, t2, t3, t4, t5, t6  are abstract polyhedral loops
+  // t1, t2, t3, t4, t5, t6 是抽象多面体循环
   mldim %t1 : {S1,S2,S3,S4,S5}  floordiv (i, 128) {
     mldim %t2 : {S1,S2,S3,S4,S5}  floordiv (j, 128) {
       // (%i, %j) = affine.apply (d0, d1) -> (128*d0, 128*d1) (%t1, %t2)
@@ -449,16 +445,16 @@ func.func @matmul(%A, %B, %C, %M, %N, %K) : (...)  { // %M, N, K are symbols
 }
 ```
 
-### Affine Relations [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#affine-relations)
+### 仿射关系
 
-The current MLIR spec includes affine maps and integer sets, but not affine relations. Affine relations are a natural way to model read and write access information, which can be very useful to capture the behavior of external library calls where no implementation is available, high-performance vendor libraries, or user-provided / user-tuned routines.
+当前的 MLIR 规范包括仿射映射和整数集，但不包括仿射关系。仿射关系是对读写访问信息进行建模的一种自然方式，对于捕获没有可用实现的外部库调用、高性能供应商提供的库或用户提供/用户调整例程的行为非常有用。
 
-An affine relation is a relation between input and output dimension identifiers while being symbolic on a list of symbolic identifiers and with affine constraints on the identifiers.
+仿射关系是输入和输出维度标识符之间的关系，同时在符号标识符列表上具有符号，并对标识符具有仿射约束。
 
-Syntax:
+语法：
 
 ```
-// Affine relation definition at the top of file
+// 文件顶部的仿射关系定义
 affine-rel-def ::= affine-rel-id `=` affine-relation-inline
 
 affine-rel-id ::= `##` prefixed-id
@@ -473,15 +469,15 @@ symbols ::= bare-id-list
 
 affine-rel ::= affine-rel-id | affine-relation-inline
 
-// Usage
+// 用法
 affine-rel-spec ::= affine-rel dim-and-symbol-use-list
 ```
 
-All identifiers appearing in input-dims, output-dims, and symbol-dims are pairwise distinct. All affine-constraint non-terminals in the above syntax are allowed to contain identifiers only from input-dims, output-dims, and symbol-dims.
+所有出现在 input-dims、output-dims 和 symbol-dims 中的标识符都是成对不同的。上述语法中的所有仿射约束非终端只允许包含来自 input-dims、output-dims 和 symbol-dims 的标识符。
 
-Affine relations are used to model read, write, may_read, and may_write sets of functions in the IR. The output dimension identifiers correspond to the data dimensions.
+仿射关系用于对 IR 中函数的read、write、may_read 和 may_write 设置进行建模。输出维度标识符与数据维度相对应。
 
-Example:
+例如：
 
 ```mlir
 // read relation: two elements ( d0 <= r0 <= d0+1 )
@@ -500,31 +496,31 @@ bb0 (%0, %1: memref<128xf32>, i64):
 }
 ```
 
-### Regions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#regions-1)
+### 区 域
 
-#### Making function definition an operation [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#making-function-definition-an-operation)
+#### 使函数定义成为操作
 
-MLIR supports values of a Function type. Instead of having first-class IR concept for functions, one could define an operation with a body region that defines a function value. The particularity of functions is that their names are globally visible and can be referred to before being defined, unlike SSA values that must be defined first. Implementing a “function definition” operation would require to relax some of the SSA constraints in a region, and also make the IR Module a region as well. It would also affect the core infrastructure (e.g., function passes) only for the sake of concept unification.
+MLIR 支持函数类型的值。我们可以用定义函数值的函数体区域来定义一个操作，而不是为函数提供一等 IR 概念。函数的特殊性在于其名称是全局可见的，可以在定义之前被引用，这与必须先定义的 SSA 值不同。实现“函数定义”操作将需要放宽区域中的一些 SSA 约束，并使 IR Module也成为一个区域。这也会影响核心基础设施（如函数传递），这些改变只是为了概念的统一。
 
-#### Having types on a region [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#having-types-on-a-region)
+#### 在区域上拥有类型
 
-Instead of inspecting the types of arguments of the first block, one could give the region itself a type. This type would be redundant with block argument types, which must have values and create room for type mismatches. While functions do have types that are partly redundant with the arguments of the first block in the function, this is necessary to support function declarations that do not have a body which we can refer to in order to obtain the argument types. A region is always contained in an operation or a function that can be queried to obtain the “type” of the region if necessary.
+与其检查第一个块的参数类型，不如给区域本身一个类型。这种带有块参数类型的类型是多余的，因为块参数类型必须有值，而且可能会造成类型不匹配。虽然函数的类型与函数中第一个块的参数有部分冗余，但这对于支持没有函数体的函数声明是必要的，因为我们可以通过引用函数体来获取参数类型。一个区域总是包含在一个操作或函数中，如有必要，可以通过查询该操作或函数来获得区域的“类型”。
 
-A type on a region can be justified if Regions were to be considered separately from the enclosing entity (operation or function) and had their own semantics that should be checked.
+如果要将区域与封闭实体（操作或函数）分开考虑，并对其自身的语义进行检查，那么区域的类型就是合理的。
 
-#### Attaching attributes to regions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#attaching-attributes-to-regions)
+#### 将属性附加到区域
 
-Regions could be annotated with dialect attributes to use attribute verification hooks. An operation could take multiple regions as arguments, and each of them may require different attributes. However, there are currently very few practical cases where this would be necessary. Instead, one could simulate per-region attributes with array attributes attached to the entity containing the region (operation or function). This decreases the overall complexity of the IR and enables more concise and op-specific forms, e.g., when all regions of an op have the same attribute that can be only mentioned once. Since the semantics of the region is entirely defined by the enclosing entity, it also makes sense to have attributes attached to that entity rather than to the region itself.
+可以用方言属性对区域进行注释，以便使用属性验证钩子。一个操作可以将多个区域作为参数，每个区域可能需要不同的属性。不过，目前需要这样做的实际情况很少。相反，我们可以用附加到包含区域的实体（操作或函数）上的数组属性来模拟每个区域的属性。这样可以降低 IR 的整体复杂性，并实现了更简洁和特定于 op 的形式，例如，当一个操作的所有区域都具有只能被提及一次的相同属性时。由于区域的语义完全由封闭实体定义，因此将属性附加到该实体而非区域本身也是合理的。
 
-This can be reconsidered in the future if we see a non-neglectable amount of use cases.
+如果我们发现有大量的使用案例，将来可以重新考虑这个问题。
 
-### Read/Write/May_Read/May_Write sets for External Functions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#readwritemay_readmay_write-sets-for-external-functions)
+### 外部函数的Read/Write/May_Read/May_Write设置
 
-Having read, write, may_read, and may_write sets for external functions which include opaque ones, high-performance vendor libraries such as CuDNN, CuB, MKL, FFT libraries, user-provided/optimized functions, or data movement runtimes such as DMA ones is a powerful feature. It allows the compiler to perform analysis, composition/transformation in the presence of such calls and with loops around such calls on sub-tensors. For user-provided or custom hand-tuned functions, the read/write/may_read/may_write sets could be provided a-priori by a user as part of the external function signature or they could be part of a database.
+为外部函数（包括不透明函数、高性能供应商提供的库（如 CuDNN、CuB、MKL、FFT 库）、用户提供/优化的函数或数据移动运行时（如DMA））设置read, write, may_read, and may_write是一项强大的功能。它允许编译器在存在此类调用时执行分析、组合/变换，并在子张量上围绕此类调用进行循环。对于用户提供或自定义的手工调优函数，read/write/may_read/may_write可以由用户事先提供，作为外部函数签名的一部分，或者它们可以是数据库的一部分。
 
-TODO: Design this, and update to use function attribute syntax.
+TODO：设计此内容，并更新以使用函数属性语法。
 
-Example:
+例如：
 
 ```mlir
 ##rel9 ( ) [s0] -> (r0, r1) : 0 <= r0 <= 1023, 0 <= r1 <= s0 - 1
@@ -547,28 +543,28 @@ func.func @dma_mem_to_scratchpad(%a : memref<1024 x f32, #layout_map0, /*mem=*/0
  ]
 ```
 
-### Memref Extensions [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#memref-extensions)
+### Memref扩展
 
-1. Arbitrary polyhedral shapes for tensors: e.g., triangular shapes in tensor dimensions where there is symmetry: use integer set (affine constraints) to model tensor data space (instead of just extents). Requires some changes to the IR and the in-memory form.
+1. 张量的任意多面体形状：例如，张量维度中存在对称性的三角形形状：使用整数集（仿射约束）来模拟张量数据空间（而不仅仅是范围）。需要对 IR 和内存中形式进行一些修改。
 
-2. Layout maps
+2. 布局映射
 
-   1. Allow piece-wise affine maps for layouts: allows clean modeling of boundary cases for images/tensors through padding, wrapping, mirroring, padding where padded values are the results of computation as opposed to data, padding in the interior as opposed to just boundaries.
-   2. Allow many-to-one layout maps: Index and layout maps in the current proposal are bijective. Extending them to many-to-one layout maps allows cleaner(?) modeling of broadcast/reduce style computations while reusing memory.
+   1. 允许布局的分段仿射映射：通过填充、包装、镜像、填充值是计算结果而非数据的填充、内部填充而非仅仅是边界填充，允许对图像/张量的边界情况进行简洁建模。
+   2. 允许多对一布局映射： 当前提案中的索引和布局映射是双射的。将它们扩展为多对一布局映射，可以在重用内存的同时，对广播/规约式计算进行更简洁的建模。
 
-   Proposal 2(a) requires non-trivial changes to the IR and the in-memory representation. 2(b) requires no change, but impacts how cost models look at index and layout maps.
+   提案 2(a)需要对 IR 和内存中表示进行非同小可的修改。2(b) 不需要修改，但会影响代价模型查看索引和布局映射的方式。
 
-### `affine.if` and `affine.for` Extensions for “Escaping Scalars” [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#affineif-and-affinefor-extensions-for-escaping-scalars)
+### 用于“逃逸标量“的`affine.if`和`affine.for`扩展
 
-We considered providing a representation for SSA values that are live out of `if/else` conditional bodies and loop carried in `affine.for` loops. We ultimately abandoned this approach due to its complexity. In the current design of MLIR, scalar variables cannot escape for loops or if instructions. In situations, where escaping is necessary, we use zero-dimensional tensors and memrefs instead of scalars.
+我们曾考虑为 `affine.for` 循环中的 `if/else` 条件体和循环携带的 SSA 值提供一种表示方法。由于其复杂性，我们最终放弃了这种方法。在 MLIR 目前的设计中，标量变量不能跳出for循环或 if 指令。在需要跳出的情况下，我们使用零维张量和memrefs代替标量。
 
-**TODO**: This whole section is obsolete and should be updated to use block arguments and a yield like terminator in for/if instructions.
+**TODO**：这整节内容已经过时，应更新为在 for/if 指令中使用块参数和类似 yield 的终结符。
 
-The abandoned design of supporting escaping scalars is as follows:
+支持逃逸标量的废弃设计如下：
 
-#### affine.for Instruction [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#affinefor-instruction)
+#### affine.for 指令
 
-Syntax:
+语法：
 
 ```
 [<out-var-list> =]
@@ -576,9 +572,9 @@ for %<index-variable-name> = <lower-bound> ... <upper-bound> step <step>
    [with <in-var-list>] { <loop-instruction-list> }
 ```
 
-out-var-list is a comma separated list of SSA values defined in the loop body and used outside the loop body. in-var-list is a comma separated list of SSA values used inside the loop body and their initializers. loop-instruction-list is a list of instructions that may also include a yield instruction.
+out-var-list是以逗号分隔的 SSA 值列表，包含在循环体中定义并在循环体外使用的 SSA 值。in-var-list是以逗号分隔的 SSA 值列表，包含在循环体中使用的 SSA 值及其初始化器。loop-instruction-list 是一个指令列表，可能还包括一条 yield 指令。
 
-Example:
+例如：
 
 ```mlir
 // Return sum of elements in 1-dimensional mref A
@@ -593,17 +589,17 @@ func.func i32 @sum(%A : memref<?xi32>, %N : i32) -> (i32) {
 }
 ```
 
-#### affine.if/else Instruction [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#affineifelse-instruction)
+#### affine.if/else 指令
 
-Syntax:
+语法：
 
 ```
 <out-var-list> = affine.if (<cond-list>) {...} [else {...}]
 ```
 
-Out-var-list is a list of SSA values defined by the if-instruction. The values are arguments to the yield-instruction that occurs in both then and else clauses when else clause is present. When if instruction contains only if clause, the escaping value defined in the then clause should be merged with the value the variable had before the if instruction. The design captured here does not handle this situation.
+Out-var-list 是由 if 指令定义的 SSA 值列表。当 else 子句存在时，这些值是 yield 指令的参数，同时出现在 then 子句和 else 子句中。当 if 指令只包含 if 子句时，then 子句中定义的逃逸值应与变量在 if 指令之前的值合并。此处捕获的设计没有处理这种情况。
 
-Example:
+示例：
 
 ```mlir
 // Compute sum of half of the array
@@ -621,17 +617,17 @@ func.func i32 @sum_half(%A : memref<?xi32>, %N : i32) -> (i32) {
 }
 ```
 
-### Multithreading the compiler [¶](https://mlir.llvm.org/docs/Rationale/Rationale/#multithreading-the-compiler)
+### 编译器多线程处理
 
-People want compilers to go fast, and one simple way to do that is to multi-thread them. There are multiple strategies for this, but a simple one is to optimize and compile separate functions in parallel. LLVM’s original pass manager anticipated this demand, and the CallGraphSCCPass manager is even designed to support this as well, but unfortunately, a few early design decisions in LLVM prevent this from ever happening. Instead, things like ThinLTO are forced to split programs into separate LLVM modules/context and optimize those chunks independently.
+人们希望编译器运行得更快，一个简单的方法就是多线程编译。为此有多种策略，但最简单的一种就是并行优化和编译不同的函数。LLVM 最初的pass管理器预计到了这一需求，CallGraphSCCPass 管理器甚至也是为了支持这一需求而设计的，但不幸的是，LLVM 早期的一些设计决策阻碍了这一需求的实现。取而代之的是，像ThinLTO这样的工具被迫将程序拆分成独立的 LLVM 模块/上下文，并对这些块进行独立优化。
 
-The problem is that LLVM has several objects in its IR that are globally uniqued and also mutable: notably constants like `i32 0`. In LLVM, these constants are `Value`’s, which allow them to be used as operands to instructions, and that they also have SSA use lists. Because these things are uniqued, every `i32 0` in any function shares a use list. This means that optimizing multiple functions in parallel won’t work (at least without some sort of synchronization on the use lists, which would be unbearably inefficient).
+问题在于，LLVM 的 IR 中有几个对象是全局唯一且可变的：特别是像 `i32 0` 这样的常量。在 LLVM 中，这些常量是 `Value`，因此可以用作指令的操作数，而且它们也有 SSA 使用列表。由于这些东西是唯一的，因此任何函数中的每个 `i32 0` 都共享一个使用列表。这意味着并行优化多个函数是行不通的（至少在不对使用列表进行某种同步的情况下是行不通的，而同步的效率会低得令人难以忍受）。
 
-MLIR now supports a multithreaded pass manager. We do this through several design choices:
+MLIR 现在支持多线程pass管理器。我们通过几种设计选择实现了这一点：
 
-1. MLIR makes use of extensive uniqued immutable data structures (affine expressions, types, etc are all immutable, uniqued, and immortal).
-2. Constants are defined in per-operation pools, instead of being globally uniqued.
-3. Functions, and other global-like operations, themselves are not SSA values either, so they don’t have the same problem as constants.
-4. Passes are copied (through their copy ctor) into one instance per thread, avoiding sharing of local state across threads.
+1. MLIR 使用了大量唯一的不可变数据结构（仿射表达式、类型等都是不可变、唯一和永恒的）。
+2. 常量在每个操作池中定义，而不是全局唯一。
+3. 函数和其他类似全局的操作本身也不是 SSA 值，因此它们不存在与常量相同的问题。
+4. Passes会被复制（通过它们的 copy ctor）到每个线程的一个实例中，从而避免了跨线程共享本地状态。
 
-This allows MLIR passes to support efficient multithreaded compilation and code generation.
+这使得 MLIR passes支持高效的多线程编译和代码生成。

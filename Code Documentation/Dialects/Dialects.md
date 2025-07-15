@@ -1,10 +1,8 @@
-TODO
+# 方言
 
-# Dialects
+本节包含 MLIR 资源库提供的核心方言和贡献方言的文档。每种方言的说明包括从方言的[定义规范（ODS）](https://mlir.llvm.org/docs/DefiningDialects/)自动生成的内容。
 
-This section contains documentation for core and contributed dialects available from the MLIR repository. The description for each dialect includes content automatically generated from the dialect’s [Definition Specification (ODS)](https://mlir.llvm.org/docs/DefiningDialects/).
-
-## Dialects Docs
+## 方言文档
 
 - ['acc' Dialect](https://mlir.llvm.org/docs/Dialects/OpenACCDialect/)
 - ['affine' Dialect](https://mlir.llvm.org/docs/Dialects/Affine/)

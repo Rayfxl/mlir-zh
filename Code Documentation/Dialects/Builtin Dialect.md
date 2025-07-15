@@ -1,12 +1,10 @@
-TODO
-
 # Builtin Dialect
 
-The builtin dialect contains a core set of Attributes, Operations, and Types that have wide applicability across a very large number of domains and abstractions. Many of the components of this dialect are also instrumental in the implementation of the core IR. As such, this dialect is implicitly loaded in every `MLIRContext`, and available directly to all users of MLIR.
+内置方言包含一组核心的属性、操作和类型，可广泛应用于大量领域和抽象概念。该方言的许多组件在核心 IR 的实现中也发挥了重要作用。因此，该方言被隐式加载到每个`MLIRContext`中，并直接提供给 MLIR 的所有用户。
 
-Given the far-reaching nature of this dialect and the fact that MLIR is extensible by design, any potential additions are heavily scrutinized.
+考虑到该方言的深远影响，以及 MLIR 在设计上的可扩展性，任何潜在的内容添加都会受到严格审查。
 
-- Attributes
+- [属性](https://mlir.llvm.org/docs/Dialects/Builtin/#attributes)
   - [AffineMapAttr](https://mlir.llvm.org/docs/Dialects/Builtin/#affinemapattr)
   - [ArrayAttr](https://mlir.llvm.org/docs/Dialects/Builtin/#arrayattr)
   - [DenseArrayAttr](https://mlir.llvm.org/docs/Dialects/Builtin/#densearrayattr)
@@ -24,7 +22,7 @@ Given the far-reaching nature of this dialect and the fact that MLIR is extensib
   - [TypeAttr](https://mlir.llvm.org/docs/Dialects/Builtin/#typeattr)
   - [UnitAttr](https://mlir.llvm.org/docs/Dialects/Builtin/#unitattr)
   - [StridedLayoutAttr](https://mlir.llvm.org/docs/Dialects/Builtin/#stridedlayoutattr)
-- Location Attributes
+- [位置属性](https://mlir.llvm.org/docs/Dialects/Builtin/#location-attributes)
   - [CallSiteLoc](https://mlir.llvm.org/docs/Dialects/Builtin/#callsiteloc)
   - [FileLineColRange](https://mlir.llvm.org/docs/Dialects/Builtin/#filelinecolrange)
   - [FusedLoc](https://mlir.llvm.org/docs/Dialects/Builtin/#fusedloc)
@@ -32,10 +30,10 @@ Given the far-reaching nature of this dialect and the fact that MLIR is extensib
   - [OpaqueLoc](https://mlir.llvm.org/docs/Dialects/Builtin/#opaqueloc)
   - [UnknownLoc](https://mlir.llvm.org/docs/Dialects/Builtin/#unknownloc)
 - [DistinctAttribute](https://mlir.llvm.org/docs/Dialects/Builtin/#distinctattribute)
-- Operations
-  - [`builtin.module` (ModuleOp)](https://mlir.llvm.org/docs/Dialects/Builtin/#builtinmodule-moduleop)
-  - [`builtin.unrealized_conversion_cast` (UnrealizedConversionCastOp)](https://mlir.llvm.org/docs/Dialects/Builtin/#builtinunrealized_conversion_cast-unrealizedconversioncastop)
-- Types
+- [操作](https://mlir.llvm.org/docs/Dialects/Builtin/#operations)
+  - [`builtin.module`(ModuleOp)](https://mlir.llvm.org/docs/Dialects/Builtin/#builtinmodule-moduleop)
+  - [`builtin.unrealized_conversion_cast`(UnrealizedConversionCastOp)](https://mlir.llvm.org/docs/Dialects/Builtin/#builtinunrealized_conversion_cast-unrealizedconversioncastop)
+- [类型](https://mlir.llvm.org/docs/Dialects/Builtin/#types)
   - [BFloat16Type](https://mlir.llvm.org/docs/Dialects/Builtin/#bfloat16type)
   - [ComplexType](https://mlir.llvm.org/docs/Dialects/Builtin/#complextype)
   - [Float4E2M1FNType](https://mlir.llvm.org/docs/Dialects/Builtin/#float4e2m1fntype)
@@ -66,46 +64,46 @@ Given the far-reaching nature of this dialect and the fact that MLIR is extensib
   - [UnrankedMemRefType](https://mlir.llvm.org/docs/Dialects/Builtin/#unrankedmemreftype)
   - [UnrankedTensorType](https://mlir.llvm.org/docs/Dialects/Builtin/#unrankedtensortype)
   - [VectorType](https://mlir.llvm.org/docs/Dialects/Builtin/#vectortype)
-- [Type Interfaces](https://mlir.llvm.org/docs/Dialects/Builtin/#type-interfaces)
+- [类型接口](https://mlir.llvm.org/docs/Dialects/Builtin/#type-interfaces)
 
-## Attributes [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#attributes)
+## 属性
 
-### AffineMapAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#affinemapattr)
+### AffineMapAttr
 
-*An Attribute containing an AffineMap object*
+*包含AffineMap对象的属性*
 
-Syntax:
+语法：
 
 ```
 affine-map-attribute ::= `affine_map` `<` affine-map `>`
 ```
 
-Examples:
+示例：
 
 ```mlir
 affine_map<(d0) -> (d0)>
 affine_map<(d0, d1, d2) -> (d0, d1)>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters)
+#### Parameters:
 
 | Parameter |  C++ type   | Description |
 | :-------: | :---------: | ----------- |
 |   value   | `AffineMap` |             |
 
-### ArrayAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#arrayattr)
+### ArrayAttr
 
-*A collection of other Attribute values*
+*其他属性值的集合*
 
-Syntax:
+语法：
 
 ```
 array-attribute ::= `[` (attribute-value (`,` attribute-value)*)? `]`
 ```
 
-An array attribute is an attribute that represents a collection of attribute values.
+数组属性是表示属性值集合的属性。
 
-Examples:
+示例：
 
 ```mlir
 []
@@ -113,28 +111,28 @@ Examples:
 [affine_map<(d0, d1, d2) -> (d0, d1)>, i32, "string attribute"]
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-1)
+#### Parameters:
 
 | Parameter |           C++ type            | Description |
 | :-------: | :---------------------------: | ----------- |
 |   value   | `::llvm::ArrayRef<Attribute>` |             |
 
-### DenseArrayAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#densearrayattr)
+### DenseArrayAttr
 
-*A dense array of integer or floating point elements.*
+*由整数或浮点数元素组成的密集数组。*
 
-A dense array attribute is an attribute that represents a dense array of primitive element types. Contrary to DenseIntOrFPElementsAttr this is a flat unidimensional array which does not have a storage optimization for splat. This allows to expose the raw array through a C++ API as `ArrayRef<T>` for compatible types. The element type must be bool or an integer or float whose bitwidth is a multiple of 8. Bool elements are stored as bytes.
+密集数组属性是表示基本元素类型的密集数组的属性。与 DenseIntOrFPElementsAttr 相反，这是一个平面一维数组，没有针对 splat 进行存储优化。这样，原始数组就可以通过 C++ API 作为`ArrayRef<T>`暴露给兼容类型。元素类型必须是 bool 或位宽为 8 的倍数的整数或浮点数。Bool 元素存储为字节。
 
-This is the base class attribute. Access to C++ types is intended to be managed through the subclasses `DenseI8ArrayAttr`, `DenseI16ArrayAttr`, `DenseI32ArrayAttr`, `DenseI64ArrayAttr`, `DenseF32ArrayAttr`, and `DenseF64ArrayAttr`.
+这是基类属性。对 C++ 类型的访问将通过子类`DenseI8ArrayAttr`、`DenseI16ArrayAttr`、`DenseI32ArrayAttr`、`DenseI64ArrayAttr`、`DenseF32ArrayAttr` 和 `DenseF64ArrayAttr` 进行管理。
 
-Syntax:
+语法：
 
 ```
 dense-array-attribute ::= `array` `<` (integer-type | float-type)
                                       (`:` tensor-literal)? `>`
 ```
 
-Examples:
+示例：
 
 ```mlir
 array<i8>
@@ -142,13 +140,13 @@ array<i32: 10, 42>
 array<f64: 42., 12.>
 ```
 
-When a specific subclass is used as argument of an operation, the declarative assembly will omit the type and print directly:
+当一个特定的子类被用作操作的参数时，声明性汇编形式将省略该类型并直接打印：
 
 ```mlir
 [1, 2, 3]
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-2)
+#### Parameters:
 
 |  Parameter  |         C++ type         | Description                                     |
 | :---------: | :----------------------: | ----------------------------------------------- |
@@ -156,11 +154,11 @@ When a specific subclass is used as argument of an operation, the declarative as
 |    size     |        `int64_t`         |                                                 |
 |   rawData   | `::llvm::ArrayRef<char>` | 64-bit aligned storage for dense array elements |
 
-### DenseIntOrFPElementsAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#denseintorfpelementsattr)
+### DenseIntOrFPElementsAttr
 
-*An Attribute containing a dense multi-dimensional array of integer or floating-point values*
+*包含整数或浮点数值的密集多维数组的属性*
 
-Syntax:
+语法：
 
 ```
 tensor-literal ::= integer-literal | float-literal | bool-literal | [] | [tensor-literal (, tensor-literal)* ]
@@ -168,9 +166,9 @@ dense-intorfloat-elements-attribute ::= `dense` `<` tensor-literal `>` `:`
                                         ( tensor-type | vector-type )
 ```
 
-A dense int-or-float elements attribute is an elements attribute containing a densely packed vector or tensor of integer or floating-point values. The element type of this attribute is required to be either an `IntegerType` or a `FloatType`.
+密集的整数或浮点元素属性是一个包含密集打包的整数或浮点数值的向量或张量的元素属性。该属性的元素类型必须是`IntegerType`或`FloatType`。
 
-Examples:
+示例：
 
 ```
 // A splat tensor of integer values.
@@ -179,27 +177,27 @@ dense<10> : tensor<2xi32>
 dense<[10.0, 11.0]> : tensor<2xf32>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-3)
+#### Parameters:
 
 | Parameter |     C++ type     | Description |
 | :-------: | :--------------: | ----------- |
 |   type    |   `ShapedType`   |             |
 |  rawData  | `ArrayRef<char>` |             |
 
-### DenseResourceElementsAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#denseresourceelementsattr)
+### DenseResourceElementsAttr
 
-*An Attribute containing a dense multi-dimensional array backed by a resource*
+*包含由资源支持的密集多维数组的属性*
 
-Syntax:
+语法：
 
 ```
 dense-resource-elements-attribute ::=
   `dense_resource` `<` resource-handle `>` `:` shaped-type
 ```
 
-A dense resource elements attribute is an elements attribute backed by a handle to a builtin dialect resource containing a densely packed array of values. This class provides the low-level attribute, which should only be interacted with in very generic terms, actual access to the underlying resource data is intended to be managed through one of the subclasses, such as; `DenseBoolResourceElementsAttr`, `DenseUI64ResourceElementsAttr`, `DenseI32ResourceElementsAttr`, `DenseF32ResourceElementsAttr`, `DenseF64ResourceElementsAttr`, etc.
+密集资源元素属性是一个由内建方言资源的句柄支持的元素属性，该资源包含一个密集打包的值数组。该类提供了底层属性，只能以非常通用的方式与之交互，对底层资源数据的实际访问应通过以下其中一个子类来管理，例如：`DenseBoolResourceElementsAttr`、`DenseUI64ResourceElementsAttr`、`DenseI32ResourceElementsAttr`、`DenseF32ResourceElementsAttr`、`DenseF64ResourceElementsAttr` 等。
 
-Examples:
+示例：
 
 ```mlir
 "example.user_op"() {attr = dense_resource<blob1> : tensor<3xi64> } : () -> ()
@@ -213,27 +211,27 @@ dialect_resources: {
 #-}
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-4)
+#### Parameters:
 
 | Parameter |           C++ type            | Description |
 | :-------: | :---------------------------: | ----------- |
 |   type    |         `ShapedType`          |             |
 | rawHandle | `DenseResourceElementsHandle` |             |
 
-### DenseStringElementsAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#densestringelementsattr)
+### DenseStringElementsAttr
 
-*An Attribute containing a dense multi-dimensional array of strings*
+*包含密集字符串多维数组的属性*
 
-Syntax:
+语法：
 
 ```
 dense-string-elements-attribute ::= `dense` `<` attribute-value `>` `:`
                                     ( tensor-type | vector-type )
 ```
 
-A dense string elements attribute is an elements attribute containing a densely packed vector or tensor of string values. There are no restrictions placed on the element type of this attribute, enabling the use of dialect specific string types.
+密集字符串元素属性是一个包含密集打包字符串值的向量或张量的元素属性。该属性的元素类型没有限制，因此可以使用方言特定的字符串类型。
 
-Examples:
+示例：
 
 ```
 // A splat tensor of strings.
@@ -242,26 +240,26 @@ dense<"example"> : tensor<2x!foo.string>
 dense<["example1", "example2"]> : tensor<2x!foo.string>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-5)
+#### Parameters:
 
 | Parameter |       C++ type        | Description |
 | :-------: | :-------------------: | ----------- |
 |   type    |     `ShapedType`      |             |
 |   value   | `ArrayRef<StringRef>` |             |
 
-### DictionaryAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#dictionaryattr)
+### DictionaryAttr
 
-*An dictionary of named Attribute values*
+*命名属性值的字典*
 
-Syntax:
+语法：
 
 ```
 dictionary-attribute ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
 ```
 
-A dictionary attribute is an attribute that represents a sorted collection of named attribute values. The elements are sorted by name, and each name must be unique within the collection.
+字典属性是表示命名属性值排序集合的属性。元素按名称排序，每个名称在集合中必须是唯一的。
 
-Examples:
+示例：
 
 ```mlir
 {}
@@ -269,26 +267,26 @@ Examples:
 {int_attr = 10, "string attr name" = "string attribute"}
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-6)
+#### Parameters:
 
 | Parameter |              C++ type              | Description |
 | :-------: | :--------------------------------: | ----------- |
 |   value   | `::llvm::ArrayRef<NamedAttribute>` |             |
 
-### FloatAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#floatattr)
+### FloatAttr
 
-*An Attribute containing a floating-point value*
+*包含浮点数值的属性*
 
-Syntax:
+语法：
 
 ```
 float-attribute ::= (float-literal (`:` float-type)?)
                   | (hexadecimal-literal `:` float-type)
 ```
 
-A float attribute is a literal attribute that represents a floating point value of the specified [float type](https://mlir.llvm.org/docs/Dialects/Builtin/#floating-point-types). It can be represented in the hexadecimal form where the hexadecimal value is interpreted as bits of the underlying binary representation. This form is useful for representing infinity and NaN floating point values. To avoid confusion with integer attributes, hexadecimal literals *must* be followed by a float type to define a float attribute.
+浮点属性是一个字面量属性，表示指定[float类型](https://mlir.llvm.org/docs/Dialects/Builtin/#floating-point-types)的浮点数值。它可以用十六进制形式表示，十六进制值被解释为底层二进制表示的位。这种形式适用于表示无穷大和 NaN 浮点数值。为避免与整数属性混淆，在定义浮点属性时，必须在十六进制字面量之后加上 float 类型。
 
-Examples:
+示例：
 
 ```
 42.0         // float attribute defaults to f64 type
@@ -298,27 +296,27 @@ Examples:
 42 : f32     // Error: expected integer type
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-7)
+#### Parameters:
 
 | Parameter |     C++ type      | Description |
 | :-------: | :---------------: | ----------- |
 |   type    |  `::mlir::Type`   |             |
 |   value   | `::llvm::APFloat` |             |
 
-### IntegerAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#integerattr)
+### IntegerAttr
 
-*An Attribute containing a integer value*
+*包含整数值的属性*
 
-Syntax:
+语法：
 
 ```
 integer-attribute ::= (integer-literal ( `:` (index-type | integer-type) )?)
                       | `true` | `false`
 ```
 
-An integer attribute is a literal attribute that represents an integral value of the specified integer or index type. `i1` integer attributes are treated as `boolean` attributes, and use a unique assembly format of either `true` or `false` depending on the value. The default type for non-boolean integer attributes, if a type is not specified, is signless 64-bit integer.
+整数属性是一个字面量属性，表示指定整数或索引类型的整数值。`i1`整数属性被视为`boolean`属性，并根据值使用唯一的汇编形式，即`true`或`false`。如果未指定类型，则非布尔整数属性的默认类型是无符号 64 位整数。
 
-Examples:
+示例：
 
 ```mlir
 10 : i32
@@ -327,54 +325,54 @@ true  // A bool, i.e. i1, value.
 false // A bool, i.e. i1, value.
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-8)
+#### Parameters:
 
-| Parameter |    C++ type    | Description |
-| :-------: | :------------: | ----------- |
-|   type    | `::mlir::Type` |             |
-|   value   |    `APInt`     |             |
+| Parameter |    C++ type     | Description |
+| :-------: | :-------------: | ----------- |
+|   type    | `::mlir::Type`  |             |
+|   value   | `::llvm::APInt` |             |
 
-### IntegerSetAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#integersetattr)
+### IntegerSetAttr
 
-*An Attribute containing an IntegerSet object*
+*包含 IntegerSet 对象的属性*
 
-Syntax:
+语法：
 
 ```
 integer-set-attribute ::= `affine_set` `<` integer-set `>`
 ```
 
-Examples:
+示例：
 
 ```mlir
 affine_set<(d0) : (d0 - 2 >= 0)>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-9)
+#### Parameters:
 
 | Parameter |   C++ type   | Description |
 | :-------: | :----------: | ----------- |
 |   value   | `IntegerSet` |             |
 
-### OpaqueAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#opaqueattr)
+### OpaqueAttr
 
-*An opaque representation of another Attribute*
+*另一个属性的不透明表示*
 
-Syntax:
+语法：
 
 ```
 opaque-attribute ::= dialect-namespace `<` attr-data `>`
 ```
 
-Opaque attributes represent attributes of non-registered dialects. These are attribute represented in their raw string form, and can only usefully be tested for attribute equality.
+不透明属性表示未注册方言的属性。这些属性以其原始字符串形式表示，只能用于测试属性是否相等。
 
-Examples:
+示例：
 
 ```mlir
 #dialect<"opaque attribute data">
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-10)
+#### Parameters:
 
 |    Parameter     |      C++ type       | Description |
 | :--------------: | :-----------------: | ----------- |
@@ -382,11 +380,11 @@ Examples:
 |     attrData     | `::llvm::StringRef` |             |
 |       type       |   `::mlir::Type`    |             |
 
-### SparseElementsAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#sparseelementsattr)
+### SparseElementsAttr
 
-*An opaque representation of a multi-dimensional array*
+*多维数组的不透明表示*
 
-Syntax:
+语法：
 
 ```
 sparse-elements-attribute ::= `sparse` `<` attribute-value `,`
@@ -394,11 +392,11 @@ sparse-elements-attribute ::= `sparse` `<` attribute-value `,`
                               ( tensor-type | vector-type )
 ```
 
-A sparse elements attribute is an elements attribute that represents a sparse vector or tensor object. This is where very few of the elements are non-zero.
+稀疏元素属性是表示稀疏向量或张量对象的元素属性。这是指只有极少数元素为非零。
 
-The attribute uses COO (coordinate list) encoding to represent the sparse elements of the elements attribute. The indices are stored via a 2-D tensor of 64-bit integer elements with shape [N, ndims], which specifies the indices of the elements in the sparse tensor that contains non-zero values. The element values are stored via a 1-D tensor with shape [N], that supplies the corresponding values for the indices.
+该属性使用 COO（坐标列表）编码来表示元素属性中的稀疏元素。索引通过形状为 [N, ndims] 的 64 位整数元素的 2-D 张量存储，该张量指定稀疏张量中包含非零值的元素的索引。元素值通过形状为 [N] 的 1-D 张量存储，该张量为索引提供相应的值。
 
-Example:
+示例：
 
 ```mlir
 sparse<[[0, 0], [1, 2]], [1, 5]> : tensor<3x4xi32>
@@ -409,7 +407,7 @@ sparse<[[0, 0], [1, 2]], [1, 5]> : tensor<3x4xi32>
 ///   [0, 0, 0, 0]]
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-11)
+#### Parameters:
 
 | Parameter |        C++ type        | Description |
 | :-------: | :--------------------: | ----------- |
@@ -417,82 +415,82 @@ sparse<[[0, 0], [1, 2]], [1, 5]> : tensor<3x4xi32>
 |  indices  | `DenseIntElementsAttr` |             |
 |  values   |  `DenseElementsAttr`   |             |
 
-### StringAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#stringattr)
+### StringAttr
 
-*An Attribute containing a string*
+*包含字符串的属性*
 
-Syntax:
+语法：
 
 ```
 string-attribute ::= string-literal (`:` type)?
 ```
 
-A string attribute is an attribute that represents a string literal value.
+字符串属性是表示字符串字面量值的属性。
 
-Examples:
+示例：
 
 ```mlir
 "An important string"
 "string with a type" : !dialect.string
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-12)
+#### Parameters:
 
 | Parameter |      C++ type       | Description |
 | :-------: | :-----------------: | ----------- |
 |   value   | `::llvm::StringRef` |             |
 |   type    |   `::mlir::Type`    |             |
 
-### SymbolRefAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#symbolrefattr)
+### SymbolRefAttr
 
-*An Attribute containing a symbolic reference to an Operation*
+*包含对操作的符号引用的属性*
 
-Syntax:
+语法：
 
 ```
 symbol-ref-attribute ::= symbol-ref-id (`::` symbol-ref-id)*
 ```
 
-A symbol reference attribute is a literal attribute that represents a named reference to an operation that is nested within an operation with the `OpTrait::SymbolTable` trait. As such, this reference is given meaning by the nearest parent operation containing the `OpTrait::SymbolTable` trait. It may optionally contain a set of nested references that further resolve to a symbol nested within a different symbol table.
+符号引用属性是一个字面量属性，表示对操作的命名引用，该操作嵌套在具有`OpTrait::SymbolTable`特征的操作中。因此，该引用由包含`OpTrait::SymbolTable`特征的最邻近的父操作赋予意义。它可以选择包含一组嵌套引用，这些引用进一步解析为嵌套在不同符号表中的符号。
 
-**Rationale:** Identifying accesses to global data is critical to enabling efficient multi-threaded compilation. Restricting global data access to occur through symbols and limiting the places that can legally hold a symbol reference simplifies reasoning about these data accesses.
+**基本原理：**识别对全局数据的访问对于实现高效的多线程编译至关重要。限制通过符号进行全局数据访问，并限制可以合法持有符号引用的位置，可以简化有关这些数据访问的推理。
 
-See [`Symbols And SymbolTables`](https://mlir.llvm.org/docs/SymbolsAndSymbolTables/) for more information.
+更多信息，请参阅[符号和符号表](https://mlir.llvm.org/docs/SymbolsAndSymbolTables/)。
 
-Examples:
+示例：
 
 ```mlir
 @flat_reference
 @parent_reference::@nested_reference
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-13)
+#### Parameters:
 
 |    Parameter     |               C++ type                | Description |
 | :--------------: | :-----------------------------------: | ----------- |
 |  rootReference   |             `StringAttr`              |             |
 | nestedReferences | `::llvm::ArrayRef<FlatSymbolRefAttr>` |             |
 
-### TypeAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#typeattr)
+### TypeAttr
 
-*An Attribute containing a Type*
+*包含类型的属性*
 
-Syntax:
+语法：
 
 ```
 type-attribute ::= type
 ```
 
-A type attribute is an attribute that represents a [type object](https://mlir.llvm.org/docs/Dialects/Builtin/#type-system).
+类型属性是表示[类型对象](https://mlir.llvm.org/docs/Dialects/Builtin/#type-system)的属性。
 
-Examples:
+示例：
 
 ```mlir
 i32
 !dialect.type
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-14)
+#### Parameters:
 
 | Parameter | C++ type | Description |
 | :-------: | :------: | ----------- |
@@ -500,19 +498,19 @@ i32
 
 ### UnitAttr
 
-*An Attribute value of `unit` type*
+*`unit`类型的属性值*
 
-Syntax:
+语法：
 
 ```
 unit-attribute ::= `unit`
 ```
 
-A unit attribute is an attribute that represents a value of `unit` type. The `unit` type allows only one value forming a singleton set. This attribute value is used to represent attributes that only have meaning from their existence.
+单位属性是表示`unit`类型值的属性。`unit`类型只允许一个值，形成一个单例集。该属性值用于表示仅从其存在开始才有意义的属性。
 
-One example of such an attribute could be the `swift.self` attribute. This attribute indicates that a function parameter is the self/context parameter. It could be represented as a [boolean attribute](https://mlir.llvm.org/docs/Dialects/Builtin/#boolean-attribute)(true or false), but a value of false doesn’t really bring any value. The parameter either is the self/context or it isn’t.
+此类属性的一个示例是`swift.self`属性。该属性表示函数参数是self/context参数。它可以表示为一个[布尔属性](https://mlir.llvm.org/docs/Dialects/Builtin/#boolean-attribute)（true 或 false），但 false 值并不会真的带任何值。参数要么是self/context参数，要么不是。
 
-Examples:
+示例：
 
 ```mlir
 // A unit attribute defined with the `unit` value specifier.
@@ -523,11 +521,11 @@ func.func @verbose_form() attributes {dialectName.unitAttr = unit}
 func.func @simple_form() attributes {dialectName.unitAttr}
 ```
 
-### StridedLayoutAttr [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#stridedlayoutattr)
+### StridedLayoutAttr
 
-*An Attribute representing a strided layout of a shaped type*
+*表示shaped类型的 Strided 布局的属性*
 
-Syntax:
+语法：
 
 ```
 strided-layout-attribute ::= `strided` `<` `[` stride-list `]`
@@ -537,53 +535,53 @@ stride-list ::= /*empty*/
 dimension ::= decimal-literal | `?`
 ```
 
-A strided layout attribute captures layout information of the memref type in the canonical form. Specifically, it contains a list of *strides*, one for each dimension. A stride is the number of elements in the linear storage one must step over to reflect an increment in the given dimension. For example, a `MxN` row-major contiguous shaped type would have the strides `[N, 1]`. The layout attribute also contains the *offset* from the base pointer of the shaped type to the first effectively accessed element, expressed in terms of the number of contiguously stored elements.
+strided 布局属性以规范形式捕获 memref 类型的布局信息。具体来说，它包含一个*strides*列表，每个维度对应一个步幅值。步幅是指线性存储中一次必须跳过的元素数量，以反映给定维度的增量。例如，`MxN`行优先连续shaped类型的步幅为`[N, 1]`。布局属性还包含从shaped类型的基指针到第一个有效访问元素的偏移量，用连续存储的元素的数量表示。
 
-Strides must be positive and the offset must be non-negative. Both the strides and the offset may be *dynamic*, i.e. their value may not be known at compile time. This is expressed as a `?` in the assembly syntax and as `ShapedType::kDynamic` in the code. Stride and offset values must satisfy the constraints above at runtime, the behavior is undefined otherwise.
+步幅必须是正数，偏移量必须是非负数。步幅和偏移量都可能是动态的，即在编译时可能不知道它们的值。这在汇编语法中用`?`表示，在代码中用`ShapedType::kDynamic`表示。步幅和偏移量在运行时必须满足上述约束，否则行为将是未定义的。
 
-See [Dialects/Builtin.md#memreftype](MemRef type) for more information.
+更多信息请参阅[Dialects/Builtin.md#memreftype](MemRef type)。
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-15)
+#### Parameters:
 
 | Parameter |          C++ type           | Description                       |
 | :-------: | :-------------------------: | --------------------------------- |
 |  offset   |          `int64_t`          |                                   |
 |  strides  | `::llvm::ArrayRef<int64_t>` | array of strides (64-bit integer) |
 
-## Location Attributes [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#location-attributes)
+## 位置属性
 
-A subset of the builtin attribute values correspond to [source locations](https://mlir.llvm.org/docs/Diagnostics/#source-locations), that may be attached to Operations.
+内置属性值的一个子集，对应于[源位置](https://mlir.llvm.org/docs/Diagnostics/#source-locations)，位置可以附加到操作。
 
-### CallSiteLoc [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#callsiteloc)
+### CallSiteLoc
 
-*A callsite source location*
+*callsite源位置*
 
-Syntax:
+语法：
 
 ```
 callsite-location ::= `callsite` `(` location `at` location `)`
 ```
 
-An instance of this location allows for representing a directed stack of location usages. This connects a location of a `callee` with the location of a `caller`.
+该位置的实例可以表示位置使用的定向堆栈。它将`callee` 的位置与`caller`的位置联系起来。
 
-Example:
+示例：
 
 ```mlir
 loc(callsite("foo" at "mysource.cc":10:8))
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-16)
+#### Parameters:
 
 | Parameter |  C++ type  | Description |
 | :-------: | :--------: | ----------- |
 |  callee   | `Location` |             |
 |  caller   | `Location` |             |
 
-### FileLineColRange [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#filelinecolrange)
+### FileLineColRange
 
-*A file:line:column source location range*
+*file:line:column源位置范围*
 
-Syntax:
+语法：
 
 ```
 filelinecol-location ::= string-literal `:` integer-literal `:`
@@ -591,20 +589,20 @@ filelinecol-location ::= string-literal `:` integer-literal `:`
                          (`to` (integer-literal ?) `:` integer-literal ?)
 ```
 
-An instance of this location represents a tuple of file, start and end line number, and start and end column number. It allows for the following configurations:
+这个位置的一个实例表示一个元组，包括文件、开始和结束行号以及开始和结束列号。它允许以下配置：
 
-- A single file line location: `file:line`;
-- A single file line col location: `file:line:column`;
-- A single line range: `file:line:column to :column`;
-- A single file range: `file:line:column to line:column`;
+- 单个文件行位置：`file:line`;
+- 单个文件行列位置：`file:line:column`;
+- 单个行范围：`file:line:column to :column`;
+- 单个文件范围：`file:line:column to line:column`;
 
-Example:
+示例：
 
 ```mlir
 loc("mysource.cc":10:8 to 12:18)
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-17)
+#### Parameters:
 
 |  Parameter   |   C++ type   | Description |
 | :----------: | :----------: | ----------- |
@@ -614,72 +612,72 @@ loc("mysource.cc":10:8 to 12:18)
 |   end_line   |  `unsigned`  |             |
 |  end_column  |  `unsigned`  |             |
 
-### FusedLoc [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#fusedloc)
+### FusedLoc
 
-*A tuple of other source locations*
+*其他源位置的元组*
 
-Syntax:
+语法：
 
 ```
 fusion-metadata ::= `<` attribute-value `>`
 fused-location ::= `fused` fusion-metadata? `[` (location (`,` location)* )? `]`
 ```
 
-An instance of a `fused` location represents a grouping of several other source locations, with optional metadata that describes the context of the fusion. There are many places within a compiler in which several constructs may be fused together, e.g. pattern rewriting, that normally result partial or even total loss of location information. With `fused` locations, this is a non-issue.
+一个`fused`位置的实例表示多个其他源位置的组合，并附有描述融合上下文的可选元数据。在编译器中，有许多地方可以将多个构造融合在一起，例如模式重写，这通常会导致部分甚至全部位置信息的丢失。有了`fused`位置，这就不是问题了。
 
-Example:
+示例：
 
 ```mlir
 loc(fused["mysource.cc":10:8, "mysource.cc":22:8])
 loc(fused<"CSE">["mysource.cc":10:8, "mysource.cc":22:8])
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-18)
+#### Parameters:
 
 | Parameter |           C++ type           | Description |
 | :-------: | :--------------------------: | ----------- |
 | locations | `::llvm::ArrayRef<Location>` |             |
 | metadata  |         `Attribute`          |             |
 
-### NameLoc [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#nameloc)
+### NameLoc
 
-*A named source location*
+*命名源位置*
 
-Syntax:
+语法：
 
 ```
 name-location ::= string-literal (`(` location `)`)?
 ```
 
-An instance of this location allows for attaching a name to a child location. This can be useful for representing the locations of variable, or node, definitions.
+该位置的实例允许将名称附加到子位置。这对于表示变量或节点定义的位置非常有用。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example)
+#### 示例：
 
 ```mlir
 loc("CSE"("mysource.cc":10:8))
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-19)
+#### Parameters:
 
 | Parameter |   C++ type   | Description |
 | :-------: | :----------: | ----------- |
 |   name    | `StringAttr` |             |
 | childLoc  |  `Location`  |             |
 
-### OpaqueLoc [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#opaqueloc)
+### OpaqueLoc
 
-*An opaque source location*
+*不透明的源位置*
 
-An instance of this location essentially contains a pointer to some data structure that is external to MLIR and an optional location that can be used if the first one is not suitable. Since it contains an external structure, only the optional location is used during serialization.
+该位置的实例本质上包含一个指向 MLIR 外部的某个数据结构的指针，以及一个可选的位置，如果第一个位置不合适，可以使用该位置。由于它包含一个外部结构，因此在序列化过程中只使用可选位置。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example-1)
+#### 示例：
 
 ```mlir
 %0 = "example.operation"() : () -> i32 loc("mysource")
 %1 = arith.constant 4 : index loc(callsite("mysum" at "mysource.cc":10:8))
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-20)
+#### Parameters:
 
 |     Parameter      |  C++ type   | Description |
 | :----------------: | :---------: | ----------- |
@@ -687,36 +685,36 @@ An instance of this location essentially contains a pointer to some data structu
 |  underlyingTypeID  |  `TypeID`   |             |
 |  fallbackLocation  | `Location`  |             |
 
-### UnknownLoc [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#unknownloc)
+### UnknownLoc
 
-*An unspecified source location*
+*未指定的源位置*
 
-Syntax:
+语法：
 
 ```
 unknown-location ::= `?`
 ```
 
-Source location information is an extremely integral part of the MLIR infrastructure. As such, location information is always present in the IR, and must explicitly be set to unknown. Thus, an instance of the `unknown` location represents an unspecified source location.
+源位置信息是 MLIR 基础设施不可或缺的一部分。因此，位置信息始终存在于 IR 中，并且必须明确设置为 unknown。因此，`unknown`位置的实例代表未指定的源位置。
 
-Example:
+示例：
 
 ```mlir
 loc(?)
 ```
 
-## DistinctAttribute [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#distinctattribute)
+## DistinctAttribute
 
-A DistinctAttribute associates an attribute with a unique identifier. As a result, multiple DistinctAttribute instances may point to the same attribute. Every call to the `create` function allocates a new DistinctAttribute instance. The address of the attribute instance serves as a temporary unique identifier. Similar to the names of SSA values, the final unique identifiers are generated during pretty printing. This delayed numbering ensures the printed identifiers are deterministic even if multiple DistinctAttribute instances are created in-parallel.
+DistinctAttribute 将一个属性与一个唯一标识符关联起来。因此，多个 DistinctAttribute 实例可能指向同一个属性。每次调用`create`函数都会分配一个新的 DistinctAttribute 实例。属性实例的地址可作为临时唯一标识符。与 SSA 值的名称类似，最终的唯一标识符是在美观打印输出期间生成的。这种延迟编号可确保打印出的标识符具有确定性，即使多个 DistinctAttribute 实例是并行创建的。
 
-Syntax:
+语法：
 
 ```
 distinct-id ::= integer-literal
 distinct-attribute ::= `distinct` `[` distinct-id `]<` attribute `>`
 ```
 
-Examples:
+示例：
 
 ```mlir
 #distinct = distinct[0]<42.0 : f32>
@@ -724,25 +722,25 @@ Examples:
 #distinct2 = distinct[2]<array<i32: 10, 42>>
 ```
 
-This mechanism is meant to generate attributes with a unique identifier, which can be used to mark groups of operations that share a common property. For example, groups of aliasing memory operations may be marked using one DistinctAttribute instance per alias group.
+该机制旨在生成具有唯一标识符的属性，该标识符可用于标记共享共同特性的操作组。例如，可以使用每个别名组的一个 DistinctAttribute 实例来标记别名内存操作组。
 
-## Operations [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#operations)
+## 操作
 
 [source](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/BuiltinOps.td)
 
-### `builtin.module` (ModuleOp) [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#builtinmodule-moduleop)
+### `builtin.module`(ModuleOp)
 
-*A top level container operation*
+*一个顶层容器操作*
 
-Syntax:
+语法：
 
 ```
 operation ::= `builtin.module` ($sym_name^)? attr-dict-with-keyword $bodyRegion
 ```
 
-A `module` represents a top-level container operation. It contains a single [graph region](https://mlir.llvm.org/docs/LangRef/) containing a single block which can contain any operations and does not have a terminator. Operations within this region cannot implicitly capture values defined outside the module, i.e. Modules are [IsolatedFromAbove](https://mlir.llvm.org/docs/Dialects/Traits.md#isolatedfromabove). Modules have an optional [symbol name](https://mlir.llvm.org/docs/SymbolsAndSymbolTables/) which can be used to refer to them in operations.
+一个`module`代表一个顶层容器操作。它包含一个[图区域](https://mlir.llvm.org/docs/LangRef/)，其中包含一个块，该块可以包含任何操作，并且没有终结符。该区域内的操作不能隐式捕获在模块外部定义的值，也就是说，模块是[IsolatedFromAbove](https://mlir.llvm.org/docs/Traits/#isolatedfromabove)的。模块有一个可选的[符号名称](https://mlir.llvm.org/docs/SymbolsAndSymbolTables/)，可用于在操作中引用它们。
 
-Example:
+示例：
 
 ```mlir
 module {
@@ -750,106 +748,103 @@ module {
 }
 ```
 
-Traits: `AffineScope`, `HasOnlyGraphRegion`, `IsolatedFromAbove`, `NoRegionArguments`, `NoTerminator`, `SingleBlock`, `SymbolTable`
+特征：`AffineScope`, `HasOnlyGraphRegion`, `IsolatedFromAbove`, `NoRegionArguments`, `NoTerminator`, `SingleBlock`, `SymbolTable`
 
-Interfaces: `OpAsmOpInterface`, `RegionKindInterface`, `Symbol`
+接口：`OpAsmOpInterface`, `RegionKindInterface`, `Symbol`
 
-#### Attributes: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#attributes-1)
+#### Attributes:
 
 | Attribute        | MLIR Type          | Description      |
 | ---------------- | ------------------ | ---------------- |
 | `sym_name`       | ::mlir::StringAttr | string attribute |
 | `sym_visibility` | ::mlir::StringAttr | string attribute |
 
-### `builtin.unrealized_conversion_cast` (UnrealizedConversionCastOp) [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#builtinunrealized_conversion_cast-unrealizedconversioncastop)
+### `builtin.unrealized_conversion_cast`(UnrealizedConversionCastOp)
 
-*An unrealized conversion from one set of types to another*
+*从一组类型到另一组类型的未实现转换*
 
-Syntax:
+语法：
 
 ```
 operation ::= `builtin.unrealized_conversion_cast` ($inputs^ `:` type($inputs))? `to` type($outputs) attr-dict
 ```
 
-An `unrealized_conversion_cast` operation represents an unrealized conversion from one set of types to another, that is used to enable the inter-mixing of different type systems. This operation should not be attributed any special representational or execution semantics, and is generally only intended to be used to satisfy the temporary intermixing of type systems during the conversion of one type system to another.
+`unrealized_conversion_cast`操作表示从一组类型到另一组类型的未实现的转换，用于实现不同类型系统的相互混合。这种操作不应被赋予任何特殊的表示或执行语义，一般只用于在一个类型系统转换为另一个类型系统的过程中满足类型系统的临时混合。
 
-This operation may produce results of arity 1-N, and accept as input operands of arity 0-N.
+此操作可以产生 1-N 的结果，并接受 0-N 的输入操作数。
 
 Example:
 
 ```mlir
-// An unrealized 0-1 conversion. These types of conversions are useful in
-// cases where a type is removed from the type system, but not all uses have
-// been converted. For example, imagine we have a tuple type that is
-// expanded to its element types. If only some uses of an empty tuple type
-// instance are converted we still need an instance of the tuple type, but
-// have no inputs to the unrealized conversion.
+// 未实现的 0-1 转换。当一个类型从类型系统中移除，但并没有转换所有使用时，这类转换就非常有用。
+// 例如，假设我们有一个元组类型，它被扩展为其元素类型。
+// 如果只转换了空元组类型实例的某些使用，我们仍然需要元组类型的实例，但没有输入用于这种未实现的转换。
 %result = unrealized_conversion_cast to !bar.tuple_type<>
 
-// An unrealized 1-1 conversion.
+// 未实现的 1-1 转换。
 %result1 = unrealized_conversion_cast %operand : !foo.type to !bar.lowered_type
 
-// An unrealized 1-N conversion.
+// 未实现的 1-N 转换。
 %results2:2 = unrealized_conversion_cast %tuple_operand : !foo.tuple_type<!foo.type, !foo.type> to !foo.type, !foo.type
 
-// An unrealized N-1 conversion.
+// 未实现的 N-1 转换。
 %result3 = unrealized_conversion_cast %operand, %operand : !foo.type, !foo.type to !bar.tuple_type<!foo.type, !foo.type>
 ```
 
-Traits: `AlwaysSpeculatableImplTrait`
+特征：`AlwaysSpeculatableImplTrait`
 
-Interfaces: `ConditionallySpeculatable`, `NoMemoryEffect (MemoryEffectOpInterface)`
+接口：`ConditionallySpeculatable`, `NoMemoryEffect (MemoryEffectOpInterface)`
 
-Effects: `MemoryEffects::Effect{}`
+副作用：`MemoryEffects::Effect{}`
 
-#### Operands: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#operands)
+#### Operands:
 
 | Operand  | Description          |
 | :------: | -------------------- |
 | `inputs` | variadic of any type |
 
-#### Results: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#results)
+#### Results:
 
 |  Result   | Description          |
 | :-------: | -------------------- |
 | `outputs` | variadic of any type |
 
-## Types [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#types)
+## 类型
 
-### BFloat16Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#bfloat16type)
+### BFloat16Type
 
-*Bfloat16 floating-point type*
+*Bfloat16 浮点类型*
 
-### ComplexType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#complextype)
+### ComplexType
 
-*Complex number with a parameterized element type*
+*具有参数化元素类型的复数*
 
-Syntax:
+语法：
 
 ```
 complex-type ::= `complex` `<` type `>`
 ```
 
-The value of `complex` type represents a complex number with a parameterized element type, which is composed of a real and imaginary value of that element type. The element must be a floating point or integer scalar type.
+`complex`类型的值表示一个具有参数化元素类型的复数，它由该元素类型的实数值和虚数值组成。元素必须是浮点或整数标量类型。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example-2)
+#### 示例：
 
 ```mlir
 complex<f32>
 complex<i32>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-21)
+#### Parameters:
 
 |  Parameter  | C++ type | Description |
 | :---------: | :------: | ----------- |
 | elementType |  `Type`  |             |
 
-### Float4E2M1FNType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float4e2m1fntype)
+### Float4E2M1FNType
 
-*4-bit floating point with 2-bit exponent and 1-bit mantissa*
+*4 位浮点，具有2 位指数和 1 位尾数*
 
-An 4-bit floating point type with 1 sign bit, 2 bits exponent and 1 bit mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions with the following characteristics:
+具有 1 位符号位、2 位指数和 1 位尾数的 4 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，具有以下特点：
 
 - bit encoding: S1E2M1
 - exponent bias: 1
@@ -857,13 +852,13 @@ An 4-bit floating point type with 1 sign bit, 2 bits exponent and 1 bit mantissa
 - NaNs: Not supported
 - denormals when exponent is 0
 
-Open Compute Project (OCP) microscaling formats (MX) specification: https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
+开放计算项目 (OCP) 微缩放格式 (MX) 规范：https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
 
-### Float6E2M3FNType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float6e2m3fntype)
+### Float6E2M3FNType
 
-*6-bit floating point with 2-bit exponent and 3-bit mantissa*
+*6 位浮点，具有 2 位指数和 3 位尾数*
 
-An 6-bit floating point type with 1 sign bit, 2 bits exponent and 3 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions with the following characteristics:
+具有 1 位符号位、2 位指数和 3 位尾数的 6 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，具有以下特点：
 
 - bit encoding: S1E2M3
 - exponent bias: 1
@@ -871,13 +866,13 @@ An 6-bit floating point type with 1 sign bit, 2 bits exponent and 3 bits mantiss
 - NaNs: Not supported
 - denormals when exponent is 0
 
-Open Compute Project (OCP) microscaling formats (MX) specification: https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
+开放计算项目 (OCP) 微缩放格式 (MX) 规范：https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
 
-### Float6E3M2FNType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float6e3m2fntype)
+### Float6E3M2FNType
 
-*6-bit floating point with 3-bit exponent and 2-bit mantissa*
+*6 位浮点，具有 3 位指数和 2 位尾数*
 
-An 6-bit floating point type with 1 sign bit, 3 bits exponent and 2 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions with the following characteristics:
+具有 1 位符号位、3 位指数和 2 位尾数的 6 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，具有以下特点：
 
 - bit encoding: S1E3M2
 - exponent bias: 3
@@ -885,13 +880,13 @@ An 6-bit floating point type with 1 sign bit, 3 bits exponent and 2 bits mantiss
 - NaNs: Not supported
 - denormals when exponent is 0
 
-Open Compute Project (OCP) microscaling formats (MX) specification: https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
+开放计算项目 (OCP) 微缩放格式 (MX) 规范：https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
 
-### Float8E3M4Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e3m4type)
+### Float8E3M4Type
 
-*8-bit floating point with 3 bits exponent and 4 bit mantissa*
+*8 位浮点，具有 3 位指数和 4 位尾数*
 
-An 8-bit floating point type with 1 sign bit, 3 bits exponent and 4 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions with the following characteristics:
+具有 1 位符号位、3 位指数和 4 位尾数的 8 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，具有以下特点：
 
 - bit encoding: S1E3M4
 - exponent bias: 3
@@ -899,11 +894,11 @@ An 8-bit floating point type with 1 sign bit, 3 bits exponent and 4 bits mantiss
 - NaNs: supported with exponent bits set to all 1s and mantissa values of {0,1}⁴ except S.111.0000
 - denormals when exponent is 0
 
-### Float8E4M3Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e4m3type)
+### Float8E4M3Type
 
-*8-bit floating point with 3 bit mantissa*
+*尾数为 3 位的 8 位浮点型*
 
-An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions with the following characteristics:
+具有 1 位符号位、4 位指数和 3 位尾数的 8 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，具有以下特点：
 
 - bit encoding: S1E4M3
 - exponent bias: 7
@@ -911,11 +906,11 @@ An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantiss
 - NaNs: supported with exponent bits set to all 1s and mantissa of (001, 010, 011, 100, 101, 110, 111)
 - denormals when exponent is 0
 
-### Float8E4M3B11FNUZType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e4m3b11fnuztype)
+### Float8E4M3B11FNUZType
 
-*8-bit floating point with 3 bit mantissa*
+*8 位浮点，尾数为 3 位*
 
-An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions, with the exception that there are no infinity values, no negative zero, and only one NaN representation. This type has the following characteristics:
+具有 1 位符号位、4 位指数和 3 位尾数的 8 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，不同之处在于没有无穷大值，没有负零，只有一个 NaN 表示。该类型具有以下特点：
 
 - bit encoding: S1E4M3
 - exponent bias: 11
@@ -923,13 +918,13 @@ An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantiss
 - NaNs: Supported with sign bit set to 1, exponent bits and mantissa bits set to all 0s
 - denormals when exponent is 0
 
-Related to: https://dl.acm.org/doi/10.5555/3454287.3454728
+相关链接：https://dl.acm.org/doi/10.5555/3454287.3454728
 
-### Float8E4M3FNType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e4m3fntype)
+### Float8E4M3FNType
 
-*8-bit floating point with 3 bit mantissa*
+*具有 3 位尾数的 8 位浮点型*
 
-An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions, with the exception that there are no infinity values and only two NaN representations. This type has the following characteristics:
+具有 1 位符号位、4 位指数和 3 位尾数的 8 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，只是没有无穷大值，只有两个 NaN 表示。该类型具有以下特点：
 
 - bit encoding: S1E4M3
 - exponent bias: 7
@@ -937,13 +932,13 @@ An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantiss
 - NaNs: supported with exponent bits and mantissa bits set to all 1s
 - denormals when exponent is 0
 
-Described in: https://arxiv.org/abs/2209.05433
+描述于： https://arxiv.org/abs/2209.05433
 
-### Float8E4M3FNUZType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e4m3fnuztype)
+### Float8E4M3FNUZType
 
-*8-bit floating point with 3 bit mantissa*
+*具有 3 位尾数的 8 位浮点型*
 
-An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions, with the exception that there are no infinity values, no negative zero, and only one NaN representation. This type has the following characteristics:
+具有 1 位符号位、4 位指数和 3 位尾数的 8 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，只是没有无穷大值、没有负零，只有一个 NaN 表示。该类型具有以下特点：
 
 - bit encoding: S1E4M3
 - exponent bias: 8
@@ -951,13 +946,13 @@ An 8-bit floating point type with 1 sign bit, 4 bits exponent and 3 bits mantiss
 - NaNs: Supported with sign bit set to 1, exponent bits and mantissa bits set to all 0s
 - denormals when exponent is 0
 
-Described in: https://arxiv.org/abs/2209.05433
+描述于： https://arxiv.org/abs/2209.05433
 
-### Float8E5M2Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e5m2type)
+### Float8E5M2Type
 
-*8-bit floating point with 2 bit mantissa*
+*具有 2 位尾数的 8 位浮点型*
 
-An 8-bit floating point type with 1 sign bit, 5 bits exponent and 2 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions with the following characteristics:
+具有 1 位符号位、5 位指数和 2 位尾数的 8 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，具有以下特点：
 
 - bit encoding: S1E5M2
 - exponent bias: 15
@@ -965,13 +960,13 @@ An 8-bit floating point type with 1 sign bit, 5 bits exponent and 2 bits mantiss
 - NaNs: supported with exponent bits set to all 1s and mantissa of (01, 10, or 11)
 - denormals when exponent is 0
 
-Described in: https://arxiv.org/abs/2209.05433
+描述于： https://arxiv.org/abs/2209.05433
 
-### Float8E5M2FNUZType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e5m2fnuztype)
+### Float8E5M2FNUZType
 
-*8-bit floating point with 2 bit mantissa*
+*带 2 位尾数的 8 位浮点型*
 
-An 8-bit floating point type with 1 sign bit, 5 bits exponent and 2 bits mantissa. This is not a standard type as defined by IEEE-754, but it follows similar conventions, with the exception that there are no infinity values, no negative zero, and only one NaN representation. This type has the following characteristics:
+具有 1 位符号位、5 位指数和 2 位尾数的 8 位浮点类型。它不是 IEEE-754 定义的标准类型，但遵循类似的约定，只是没有无穷大值、没有负零，只有一个 NaN 表示。该类型具有以下特点：
 
 - bit encoding: S1E5M2
 - exponent bias: 16
@@ -979,13 +974,13 @@ An 8-bit floating point type with 1 sign bit, 5 bits exponent and 2 bits mantiss
 - NaNs: Supported with sign bit set to 1, exponent bits and mantissa bits set to all 0s
 - denormals when exponent is 0
 
-Described in: https://arxiv.org/abs/2206.02915
+描述于： https://arxiv.org/abs/2206.02915
 
-### Float8E8M0FNUType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float8e8m0fnutype)
+### Float8E8M0FNUType
 
-*8-bit floating point with 8-bit exponent, no mantissa or sign*
+*8 位浮点，带 8 位指数，无尾数或符号*
 
-An 8-bit floating point type with no sign bit, 8 bits exponent and no mantissa. This is not a standard type as defined by IEEE-754; it is intended to be used for representing scaling factors, so it cannot represent zeros and negative numbers. The values it can represent are powers of two in the range [-127,127] and NaN.
+一个8 位浮点类型，无符号位、8 位指数，没有尾数。这不是 IEEE-754 定义的标准类型；它用于表示缩放因子，因此不能表示零和负数。它可以表示的值是[-127,127] 范围内的 2 的幂和 NaN。
 
 - bit encoding: S0E8M0
 - exponent bias: 127
@@ -993,47 +988,47 @@ An 8-bit floating point type with no sign bit, 8 bits exponent and no mantissa. 
 - NaNs: Supported with all bits set to 1
 - denormals: Not supported
 
-Open Compute Project (OCP) microscaling formats (MX) specification: https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
+开放计算项目 (OCP) 微缩放格式 (MX) 规范：https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
 
-### Float16Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float16type)
+### Float16Type
 
-*16-bit floating-point type*
+*16 位浮点类型*
 
-### Float32Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float32type)
+### Float32Type
 
-*32-bit floating-point type*
+*32 位浮点类型*
 
-### Float64Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float64type)
+### Float64Type
 
-*64-bit floating-point type*
+*64 位浮点类型*
 
-### Float80Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float80type)
+### Float80Type
 
-*80-bit floating-point type*
+*80 位浮点类型*
 
-### Float128Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#float128type)
+### Float128Type
 
-*128-bit floating-point type*
+*128 位浮点类型*
 
-### FloatTF32Type [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#floattf32type)
+### FloatTF32Type
 
-*TF32 floating-point type*
+*TF32 浮点类型*
 
 ### FunctionType
 
-*Map from a list of inputs to a list of results*
+*从输入列表到结果列表的映射*
 
-Syntax:
+语法：
 
 ```
-// Function types may have multiple results.
+// 函数类型可以有多个结果。
 function-result-type ::= type-list-parens | non-function-type
 function-type ::= type-list-parens `->` function-result-type
 ```
 
-The function type can be thought of as a function signature. It consists of a list of formal parameter types and a list of formal result types.
+函数类型可以看作是函数签名。它由一个形式参数类型列表和一个形式结果类型列表组成。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example-3)
+#### 示例：
 
 ```mlir
 func.func @add_one(%arg0 : i64) -> i64 {
@@ -1043,33 +1038,33 @@ func.func @add_one(%arg0 : i64) -> i64 {
 }
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-22)
+#### Parameters:
 
 | Parameter |     C++ type     | Description |
 | :-------: | :--------------: | ----------- |
 |  inputs   | `ArrayRef<Type>` |             |
 |  results  | `ArrayRef<Type>` |             |
 
-### IndexType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#indextype)
+### IndexType
 
-*Integer-like type with unknown platform-dependent bit width*
+*类似整数的类型，位宽未知，取决于平台。*
 
-Syntax:
+语法：
 
 ```
-// Target word-sized integer.
+// 目标字大小的整数。
 index-type ::= `index`
 ```
 
-The index type is a signless integer whose size is equal to the natural machine word of the target ( [rationale](https://mlir.llvm.org/docs/Rationale/Rationale/#integer-signedness-semantics) ) and is used by the affine constructs in MLIR.
+索引类型是一个无符号整数，其大小等于目标机器的自然机器字大小（[基本原理](https://mlir.llvm.org/docs/Rationale/Rationale/#integer-signedness-semantics)），被 MLIR 中的仿射构造使用。
 
-**Rationale:** integers of platform-specific bit widths are practical to express sizes, dimensionalities and subscripts.
+**基本原理：** 特定平台位宽的整数可用于表达大小、维度和下标。
 
 ### IntegerType
 
-*Integer type with arbitrary precision up to a fixed limit*
+*具有任意精度的整数类型，但这种任意精度有一个固定的最大限制值*
 
-Syntax:
+语法：
 
 ```
 // Sized integers like i1, i4, i8, i16, i32.
@@ -1081,22 +1076,22 @@ integer-type ::= signed-integer-type |
                  signless-integer-type
 ```
 
-Integer types have a designated bit width and may optionally have signedness semantics.
+整数类型有指定的位宽，可以选择具有符号语义。
 
-**Rationale:** low precision integers (like `i2`, `i4` etc) are useful for low-precision inference chips, and arbitrary precision integers are useful for hardware synthesis (where a 13 bit multiplier is a lot cheaper/smaller than a 16 bit one).
+**基本原理：** 低精度整数（如`i2`、`i4`等）适用于低精度推理芯片，任意精度整数适用于硬件综合（13 位乘法器比 16 位乘法器便宜/小得多）。
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-23)
+#### Parameters:
 
 | Parameter  |       C++ type        | Description |
 | :--------: | :-------------------: | ----------- |
 |   width    |      `unsigned`       |             |
 | signedness | `SignednessSemantics` |             |
 
-### MemRefType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#memreftype)
+### MemRefType
 
-*Shaped reference to a region of memory*
+*对内存区域的shaped引用*
 
-Syntax:
+语法：
 
 ```
 layout-specification ::= attribute-value
@@ -1105,32 +1100,32 @@ memref-type ::= `memref` `<` dimension-list-ranked type
                 (`,` layout-specification)? (`,` memory-space)? `>`
 ```
 
-A `memref` type is a reference to a region of memory (similar to a buffer pointer, but more powerful). The buffer pointed to by a memref can be allocated, aliased and deallocated. A memref can be used to read and write data from/to the memory region which it references. Memref types use the same shape specifier as tensor types. Note that `memref<f32>`, `memref<0 x f32>`, `memref<1 x 0 x f32>`, and `memref<0 x 1 x f32>` are all different types.
+`memref`类型是对内存区域的引用（类似于缓冲区指针，但功能更强大）。memref 指向的缓冲区可以被分配、别名化和释放。Memref 可用于从它所引用的内存区域读写数据。Memref 类型使用与张量类型相同的形状说明符。请注意，`memref<f32>`、`memref<0 x f32>`、`memref<1 x 0 x f32>`和`memref<0 x 1 x f32>`都是不同的类型。
 
-A `memref` is allowed to have an unknown rank (e.g. `memref<*xf32>`). The purpose of unranked memrefs is to allow external library functions to receive memref arguments of any rank without versioning the functions based on the rank. Other uses of this type are disallowed or will have undefined behavior.
+`memref`允许有未知秩（例如`memref<*xf32>`）。无秩 memref 的目的是允许外部库函数接收任意秩的 memref 参数，而无需根据秩对函数进行版本控制。该类型的其他用法是不允许的，或者说用了之后会产生未定义的行为。
 
-Are accepted as elements:
+以下可作为元素被该类型接受：
 
-- built-in integer types;
-- built-in index type;
-- built-in floating point types;
-- built-in vector types with elements of the above types;
-- another memref type;
-- any other type implementing `MemRefElementTypeInterface`.
+- 内置整数类型；
+- 内置索引类型；
+- 内置浮点类型；
+- 含有上述类型元素的内置向量类型；
+- 另一个 Memref 类型；
+- 实现`MemRefElementTypeInterface`的任何其他类型。
 
-##### Layout [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#layout)
+##### 布局
 
-A memref may optionally have a layout that indicates how indices are transformed from the multi-dimensional form into a linear address. The layout must avoid internal aliasing, i.e., two distinct tuples of *in-bounds* indices must be pointing to different elements in memory. The layout is an attribute that implements `MemRefLayoutAttrInterface`. The bulitin dialect offers two kinds of layouts: strided and affine map, each of which is available as an attribute. Other attributes may be used to represent the layout as long as they can be converted to a [semi-affine map](https://mlir.llvm.org/docs/Dialects/Affine/#semi-affine-maps) and implement the required interface. Users of memref are expected to fallback to the affine representation when handling unknown memref layouts. Multi-dimensional affine forms are interpreted in *row-major* fashion.
+Memref 可以选择具有一个布局，表示如何将索引从多维形式变换为线性地址。布局必须避免内部别名，即两个不同的界内索引元组必须指向内存中的不同元素。布局是一个实现了`MemRefLayoutAttrInterface`的属性。内置方言提供了两种布局：strided 和 affine map，每种布局都可以作为一个属性使用。只要能转换为[半仿射映射](https://mlir.llvm.org/docs/Dialects/Affine/#semi-affine-maps)并实现所需的接口，其他属性也可以用来表示布局。memref 的使用者在处理未知的 memref 布局时，应回退到仿射表示法。多维仿射形式按行优先方式解释。
 
-In absence of an explicit layout, a memref is considered to have a multi-dimensional identity affine map layout. Identity layout maps do not contribute to the MemRef type identification and are discarded on construction. That is, a type with an explicit identity map is `memref<?x?xf32, (i,j)->(i,j)>` is strictly the same as the one without a layout, `memref<?x?xf32>`.
+在没有显式布局的情况下，memref 被视为具有多维恒等affine map布局。恒等布局映射对 MemRef 类型识别没有帮助，在构造时会被丢弃。也就是说，有显式恒等映射的类型`memref<?x?xf32, (i,j)->(i,j)>`与没有布局的类型`memref<?x?xf32>`严格上是相同的。
 
-##### Affine Map Layout [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#affine-map-layout)
+##### 仿射映射布局
 
-The layout may be represented directly as an affine map from the index space to the storage space. For example, the following figure shows an index map which maps a 2-dimensional index from a 2x2 index space to a 3x3 index space, using symbols `S0` and `S1` as offsets.
+布局可直接表示为从索引空间到存储空间的仿射映射。例如，下图显示了一个索引映射，它将一个 2 维索引从 2x2 索引空间映射到 3x3 索引空间，使用符号`S0`和`S1`作为偏移量。
 
 ![Index Map Example](https://mlir.llvm.org/includes/img/index-map.svg)
 
-Semi-affine maps are sufficiently flexible to represent a wide variety of dense storage layouts, including row- and column-major and tiled:
+半仿射映射具有足够的灵活性，可以表示各种密集存储布局，包括行优先、列优先和分块：
 
 ```mlir
 // MxN matrix stored in row major layout in memory:
@@ -1143,114 +1138,110 @@ Semi-affine maps are sufficiently flexible to represent a wide variety of dense 
 #layout_tiled = (i, j) -> (i floordiv 64, j floordiv 64, i mod 64, j mod 64)
 ```
 
-##### Strided Layout [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#strided-layout)
+##### Strided布局
 
-Memref layout can be expressed using strides to encode the distance, in number of elements, in (linear) memory between successive entries along a particular dimension. For example, a row-major strided layout for `memref<2x3x4xf32>` is `strided<[12, 4, 1]>`, where the last dimension is contiguous as indicated by the unit stride and the remaining strides are products of the sizes of faster-variying dimensions. Strided layout can also express non-contiguity, e.g., `memref<2x3, strided<[6, 2]>>` only accesses even elements of the dense consecutive storage along the innermost dimension.
+Memref 布局可以通过strides来表示，步幅用于编码在（线性）内存中沿特定维度的连续项之间的距离（以元素数量为单位）。例如，`memref<2x3x4xf32>`的行优先strides布局是`strided<[12, 4, 1]>`，其中最后一个维度是连续的，由单位步幅表示，其余步幅是变化较快的维度大小的乘积。strided布局还可以表示非连续性，例如，`memref<2x3, strided<[6, 2]>>`只访问沿最内层维度密集连续存储的偶数元素。
 
-The strided layout supports an optional *offset* that indicates the distance, in the number of elements, between the beginning of the memref and the first accessed element. When omitted, the offset is considered to be zero. That is, `memref<2, strided<[2], offset: 0>>` and `memref<2, strided<[2]>>` are strictly the same type.
+步幅布局支持一个可选的偏移量，它表示 memref 开始位置与第一个访问元素之间的距离（以元素数量为单位）。省略偏移量时，偏移量被视为零。也就是说，`memref<2, strided<[2], offset: 0>>`和`memref<2, strided<[2]>>`严格来说是同一类型。
 
-Both offsets and strides may be *dynamic*, that is, unknown at compile time. This is represented by using a question mark (`?`) instead of the value in the textual form of the IR.
+偏移量和步幅都可能是动态的，即在编译时未知。在 IR 的文本形式中，用问号（`?`）代替值来表示。
 
-The strided layout converts into the following canonical one-dimensional affine form through explicit linearization:
+通过显式线性化，strided 布局可以转换为以下规范的一维仿射形式：
 
 ```mlir
 affine_map<(d0, ... dN)[offset, stride0, ... strideN] ->
             (offset + d0 * stride0 + ... dN * strideN)>
 ```
 
-Therefore, it is never subject to the implicit row-major layout interpretation.
+因此，它永远不会受到隐式行优先布局解释的影响。
 
-##### Codegen of Unranked Memref [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#codegen-of-unranked-memref)
+##### 无秩memref的代码生成 
 
-Using unranked memref in codegen besides the case mentioned above is highly discouraged. Codegen is concerned with generating loop nests and specialized instructions for high-performance, unranked memref is concerned with hiding the rank and thus, the number of enclosing loops required to iterate over the data. However, if there is a need to code-gen unranked memref, one possible path is to cast into a static ranked type based on the dynamic rank. Another possible path is to emit a single while loop conditioned on a linear index and perform delinearization of the linear index to a dynamic array containing the (unranked) indices. While this is possible, it is expected to not be a good idea to perform this during codegen as the cost of the translations is expected to be prohibitive and optimizations at this level are not expected to be worthwhile. If expressiveness is the main concern, irrespective of performance, passing unranked memrefs to an external C++ library and implementing rank-agnostic logic there is expected to be significantly simpler.
+除上述情况外，不建议在代码生成中使用无秩 memref。Codegen 关注的是生成高性能的循环嵌套和专用指令，而无秩 memref 关注的是隐藏秩，从而隐藏遍历数据所需的封闭循环次数。不过，如果需要对无秩 memref 进行代码生成，一种可能的方法是根据动态秩创建静态秩类型。另一种可能的方法是在线性索引的条件下生成单个 while 循环，并将线性索引去线性化为包含（无秩）索引的动态数组。虽然这是可能的，但在代码生成过程中执行这种操作不是一个好主意，因为翻译的成本会很高，而且在这个层面上的优化也不值得。如果表达性是主要考虑因素，那么无论性能如何，将无秩的 memrefs 传递到外部 C++ 库并在其中实现与秩无关的逻辑会简单得多。
 
-Unranked memrefs may provide expressiveness gains in the future and help bridge the gap with unranked tensors. Unranked memrefs will not be expected to be exposed to codegen but one may query the rank of an unranked memref (a special op will be needed for this purpose) and perform a switch and cast to a ranked memref as a prerequisite to codegen.
+无秩 memrefs 未来可能会提高表达能力，并有助于缩小与无秩张量之间的差距。无秩 memrefs 预计不会暴露在 codegen 中，但人们可以查询无秩 memref 的秩 (为此需要一个特殊操作)，执行切换和转型为有秩 memref，并作为 codegen 的先决条件。
 
-Example:
+示例：
 
 ```mlir
-// With static ranks, we need a function for each possible argument type
+// 对于静态秩，我们需要为每种可能的参数类型创建一个函数
 %A = alloc() : memref<16x32xf32>
 %B = alloc() : memref<16x32x64xf32>
 call @helper_2D(%A) : (memref<16x32xf32>)->()
 call @helper_3D(%B) : (memref<16x32x64xf32>)->()
 
-// With unknown rank, the functions can be unified under one unranked type
+// 在秩未知的情况下，函数可以统一在一个无秩类型下
 %A = alloc() : memref<16x32xf32>
 %B = alloc() : memref<16x32x64xf32>
-// Remove rank info
+// 移除秩信息
 %A_u = memref_cast %A : memref<16x32xf32> -> memref<*xf32>
 %B_u = memref_cast %B : memref<16x32x64xf32> -> memref<*xf32>
-// call same function with dynamic ranks
+// 使用动态秩调用相同函数
 call @helper(%A_u) : (memref<*xf32>)->()
 call @helper(%B_u) : (memref<*xf32>)->()
 ```
 
-The core syntax and representation of a layout specification is a [semi-affine map](https://mlir.llvm.org/docs/Dialects/Affine/#semi-affine-maps). Additionally, syntactic sugar is supported to make certain layout specifications more intuitive to read. For the moment, a `memref` supports parsing a strided form which is converted to a semi-affine map automatically.
+布局规范的核心语法和表示方法是[半仿射映射](https://mlir.llvm.org/docs/Dialects/Affine/#semi-affine-maps)。此外，还支持语法糖，以使某些布局规范读起来更直观。目前，`memref`支持解析 strided 形式，该形式会自动转换为半仿射映射。
 
-The memory space of a memref is specified by a target-specific attribute. It might be an integer value, string, dictionary or custom dialect attribute. The empty memory space (attribute is None) is target specific.
+memref 的内存空间由目标特定的属性指定。它可以是整数值、字符串、字典或自定义方言属性。空内存空间（属性是None）是目标特定的。
 
-The notionally dynamic value of a memref value includes the address of the buffer allocated, as well as the symbols referred to by the shape, layout map, and index maps.
+memref 值的名义动态值包括分配的缓冲区地址，以及形状、布局映射和索引映射所引用的符号。
 
-Examples of memref static type
+memref 静态类型示例：
 
 ```mlir
-// Identity index/layout map
+// 恒等索引/布局映射
 #identity = affine_map<(d0, d1) -> (d0, d1)>
 
-// Column major layout.
+// 列优先布局。
 #col_major = affine_map<(d0, d1, d2) -> (d2, d1, d0)>
 
-// A 2-d tiled layout with tiles of size 128 x 256.
+// 块大小为 128 x 256 的二维分块布局。
 #tiled_2d_128x256 = affine_map<(d0, d1) -> (d0 div 128, d1 div 256, d0 mod 128, d1 mod 256)>
 
-// A tiled data layout with non-constant tile sizes.
+// 非恒定块大小的块数据布局。
 #tiled_dynamic = affine_map<(d0, d1)[s0, s1] -> (d0 floordiv s0, d1 floordiv s1,
                              d0 mod s0, d1 mod s1)>
 
-// A layout that yields a padding on two at either end of the minor dimension.
+// 在小维度的两端产生两个填充的布局。
 #padded = affine_map<(d0, d1) -> (d0, (d1 + 2) floordiv 2, (d1 + 2) mod 2)>
 
 
-// The dimension list "16x32" defines the following 2D index space:
+// 维度列表 "16x32 "定义了以下二维索引空间：
 //
 //   { (i, j) : 0 <= i < 16, 0 <= j < 32 }
 //
 memref<16x32xf32, #identity>
 
-// The dimension list "16x4x?" defines the following 3D index space:
+// 维度列表 "16x4x? "定义了以下三维索引空间：
 //
 //   { (i, j, k) : 0 <= i < 16, 0 <= j < 4, 0 <= k < N }
 //
-// where N is a symbol which represents the runtime value of the size of
-// the third dimension.
+// 其中 N 是一个符号，代表第三维大小的运行时值。
 //
-// %N here binds to the size of the third dimension.
+// %N 在这里绑定到第三维的大小。
 %A = alloc(%N) : memref<16x4x?xf32, #col_major>
 
-// A 2-d dynamic shaped memref that also has a dynamically sized tiled
-// layout. The memref index space is of size %M x %N, while %B1 and %B2
-// bind to the symbols s0, s1 respectively of the layout map #tiled_dynamic.
-// Data tiles of size %B1 x %B2 in the logical space will be stored
-// contiguously in memory. The allocation size will be
-// (%M ceildiv %B1) * %B1 * (%N ceildiv %B2) * %B2 f32 elements.
+// 一个二维动态形状的 memref，它也有一个动态大小的分块布局。
+// memref索引空间的大小为 %M x %N，而%B1和%B2分别绑定到布局映射 #tiled_dynamic 的符号 s0 和 s1。
+// 逻辑空间中大小为 %B1 x %B2 的数据块将连续存储在内存中。
+// 分配大小为 (%M ceildiv %B1) * %B1 * (%N ceildiv %B2) * %B2 个f32元素。
 %T = alloc(%M, %N) [%B1, %B2] : memref<?x?xf32, #tiled_dynamic>
 
-// A memref that has a two-element padding at either end. The allocation
-// size will fit 16 * 64 float elements of data.
+// 一个在两端有两元素填充的 memref。分配大小将适配 16 * 64 个浮点元素数据。
 %P = alloc() : memref<16x64xf32, #padded>
 
-// Affine map with symbol 's0' used as offset for the first dimension.
+// 使用符号's0'作为第一维的偏移量的仿射映射。
 #imapS = affine_map<(d0, d1) [s0] -> (d0 + s0, d1)>
-// Allocate memref and bind the following symbols:
-// '%n' is bound to the dynamic second dimension of the memref type.
-// '%o' is bound to the symbol 's0' in the affine map of the memref type.
+// 分配 memref 并绑定以下符号：
+// ‘%n’ 绑定到 memref 类型的动态第二维。
+// ‘%o'绑定到 memref 类型仿射映射中的符号's0’。
 %n = ...
 %o = ...
 %A = alloc (%n)[%o] : <16x?xf32, #imapS>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-24)
+#### Parameters:
 
 |  Parameter  |          C++ type           | Description |
 | :---------: | :-------------------------: | ----------- |
@@ -1259,19 +1250,19 @@ memref<16x32xf32, #identity>
 |   layout    | `MemRefLayoutAttrInterface` |             |
 | memorySpace |         `Attribute`         |             |
 
-### NoneType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#nonetype)
+### NoneType
 
-*A unit type*
+*一个单位类型*
 
-Syntax:
+语法：
 
 ```
 none-type ::= `none`
 ```
 
-NoneType is a unit type, i.e. a type with exactly one possible value, where its value does not have a defined dynamic representation.
+NoneType 是一个单位类型，即只有一个可能值的类型，其值没有定义的动态表示。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example-4)
+#### 示例：
 
 ```mlir
 func.func @none_type() {
@@ -1280,37 +1271,37 @@ func.func @none_type() {
 }
 ```
 
-### OpaqueType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#opaquetype)
+### OpaqueType
 
-*Type of a non-registered dialect*
+*未注册方言的类型*
 
-Syntax:
+语法：
 
 ```
 opaque-type ::= `opaque` `<` type `>`
 ```
 
-Opaque types represent types of non-registered dialects. These are types represented in their raw string form, and can only usefully be tested for type equality.
+不透明类型表示未注册方言的类型。它们是以原始字符串形式表示的类型，只能用于测试类型是否相等。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example-5)
+#### 示例：
 
 ```mlir
 opaque<"llvm", "struct<(i32, float)>">
 opaque<"pdl", "value">
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-25)
+#### Parameters:
 
 |    Parameter     |      C++ type       | Description |
 | :--------------: | :-----------------: | ----------- |
 | dialectNamespace |    `StringAttr`     |             |
 |     typeData     | `::llvm::StringRef` |             |
 
-### RankedTensorType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#rankedtensortype)
+### RankedTensorType
 
-*Multi-dimensional array with a fixed number of dimensions*
+*具有固定维数的多维数组*
 
-Syntax:
+语法：
 
 ```
 tensor-type ::= `tensor` `<` dimension-list type (`,` encoding)? `>`
@@ -1319,40 +1310,40 @@ dimension ::= `?` | decimal-literal
 encoding ::= attribute-value
 ```
 
-Values with tensor type represents aggregate N-dimensional data values, and have a known element type and a fixed rank with a list of dimensions. Each dimension may be a static non-negative decimal constant or be dynamically determined (indicated by `?`).
+张量类型的值表示 N 维数据的集合值，具有已知的元素类型和带有维度列表的固定秩。每个维度可以是一个静态的非负十进制常数，也可以是动态确定的（用`?`表示）。
 
-The runtime representation of the MLIR tensor type is intentionally abstracted - you cannot control layout or get a pointer to the data. For low level buffer access, MLIR has a [`memref` type](https://mlir.llvm.org/docs/Dialects/Builtin/#memreftype). This abstracted runtime representation holds both the tensor data values as well as information about the (potentially dynamic) shape of the tensor. The [`dim` operation](https://mlir.llvm.org/docs/Dialects/MemRef/#memrefdim-mlirmemrefdimop) returns the size of a dimension from a value of tensor type.
+MLIR 张量类型的运行时表示是有意抽象的，你无法控制布局或获取指向数据的指针。对于低级缓冲区访问，MLIR 有一个[`memref`类型](https://mlir.llvm.org/docs/Dialects/Builtin/#memreftype)。这种抽象化的运行时表示既保存张量数据值，也保存有关张量形状（可能是动态的）的信息。[`dim`操作](https://mlir.llvm.org/docs/Dialects/MemRef/#memrefdim-mlirmemrefdimop)根据张量类型的值返回维度的大小。
 
-The `encoding` attribute provides additional information on the tensor. An empty attribute denotes a straightforward tensor without any specific structure. But particular properties, like sparsity or other specific characteristics of the data of the tensor can be encoded through this attribute. The semantics are defined by a type and attribute interface and must be respected by all passes that operate on tensor types. TODO: provide this interface, and document it further.
+`encoding`属性提供了有关张量的其他信息。空属性表示没有任何特定结构的直接张量。但张量数据的特定特性，如稀疏性或其他特定特点，可以通过该属性进行编码。其语义由类型和属性接口定义，所有对张量类型进行操作的passes都必须遵守。TODO：提供此接口，并进一步记录。
 
-Note: hexadecimal integer literals are not allowed in tensor type declarations to avoid confusion between `0xf32` and `0 x f32`. Zero sizes are allowed in tensors and treated as other sizes, e.g., `tensor<0 x 1 x i32>` and `tensor<1 x 0 x i32>` are different types. Since zero sizes are not allowed in some other types, such tensors should be optimized away before lowering tensors to vectors.
+注意：张量类型声明中不允许使用十六进制整数字面量，以避免`0xf32`和`0 x f32`之间的混淆。张量中允许使用零大小，并将其视为其他大小，例如，`tensor<0 x 1 x i32>`和`tensor<1 x 0 x i32>`是不同的类型。由于在某些其他类型中不允许使用零大小，因此在将张量降级到向量之前，应先将此类张量优化掉。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example-6)
+#### 示例：
 
 ```mlir
-// Known rank but unknown dimensions.
+// 已知秩但未知维度。
 tensor<? x ? x ? x ? x f32>
 
-// Partially known dimensions.
+// 部分维度已知。
 tensor<? x ? x 13 x ? x f32>
 
-// Full static shape.
+// 完全的静态形状。
 tensor<17 x 4 x 13 x 4 x f32>
 
-// Tensor with rank zero. Represents a scalar.
+// 张量秩为零。代表一个标量。
 tensor<f32>
 
-// Zero-element dimensions are allowed.
+// 允许零元素维度。
 tensor<0 x 42 x f32>
 
-// Zero-element tensor of f32 type (hexadecimal literals not allowed here).
+// f32 类型的零元素张量（此处不允许十六进制字面量）。
 tensor<0xf32>
 
-// Tensor with an encoding attribute (where #ENCODING is a named alias).
+// 具有编码属性的张量（其中 #ENCODING 是一个命名别名）。
 tensor<?x?xf64, #ENCODING>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-26)
+#### Parameters:
 
 |  Parameter  |          C++ type           | Description |
 | :---------: | :-------------------------: | ----------- |
@@ -1360,99 +1351,99 @@ tensor<?x?xf64, #ENCODING>
 | elementType |           `Type`            |             |
 |  encoding   |         `Attribute`         |             |
 
-### TupleType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#tupletype)
+### TupleType
 
-*Fixed-sized collection of other types*
+*其他类型的固定大小集合*
 
-Syntax:
+语法：
 
 ```
 tuple-type ::= `tuple` `<` (type ( `,` type)*)? `>`
 ```
 
-The value of `tuple` type represents a fixed-size collection of elements, where each element may be of a different type.
+`tuple`类型的值表示一个固定大小的元素集合，其中每个元素可能是不同的类型。
 
-**Rationale:** Though this type is first class in the type system, MLIR provides no standard operations for operating on `tuple` types ( [rationale](https://mlir.llvm.org/docs/Rationale/Rationale/#tuple-types)).
+**基本原理：** 虽然这种类型在类型系统中是第一等的，但 MLIR 没有提供对`tuple`类型进行操作的标准操作（[理由](https://mlir.llvm.org/docs/Rationale/Rationale/#tuple-types)）。
 
-#### Example: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#example-7)
+#### 示例：
 
 ```mlir
-// Empty tuple.
+// 空元组。
 tuple<>
 
-// Single element
+// 单元素元组
 tuple<f32>
 
-// Many elements.
+// 多元素元组
 tuple<i32, f32, tensor<i1>, i5>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-27)
+#### Parameters:
 
 | Parameter |     C++ type     | Description |
 | :-------: | :--------------: | ----------- |
 |   types   | `ArrayRef<Type>` |             |
 
-### UnrankedMemRefType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#unrankedmemreftype)
+### UnrankedMemRefType
 
-*Shaped reference, with unknown rank, to a region of memory*
+*指向内存区域的未知秩的shaped引用*
 
-Syntax:
+语法：
 
 ```
 unranked-memref-type ::= `memref` `<*x` type (`,` memory-space)? `>`
 memory-space ::= attribute-value
 ```
 
-A `memref` type with an unknown rank (e.g. `memref<*xf32>`). The purpose of unranked memrefs is to allow external library functions to receive memref arguments of any rank without versioning the functions based on the rank. Other uses of this type are disallowed or will have undefined behavior.
+未知秩的`memref`类型（例如`memref<*xf32>`）。无秩memref的目的是允许外部库函数接收任何秩的 memref 参数，而无需根据秩对函数进行版本控制。此类型的其他用法是不允许的，否则会产生未定义的行为。
 
-See [MemRefType](https://mlir.llvm.org/docs/Dialects/Builtin/#memreftype) for more information on memref types.
+有关 memref 类型的更多信息，请参阅[MemRefType](https://mlir.llvm.org/docs/Dialects/Builtin/#memreftype)。
 
-#### Examples: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#examples)
+#### 示例：
 
 ```mlir
 memref<*f32>
 
-// An unranked memref with a memory space of 10.
+// 内存空间为 10 的无秩 memref。
 memref<*f32, 10>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-28)
+#### Parameters:
 
 |  Parameter  |  C++ type   | Description |
 | :---------: | :---------: | ----------- |
 | elementType |   `Type`    |             |
 | memorySpace | `Attribute` |             |
 
-### UnrankedTensorType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#unrankedtensortype)
+### UnrankedTensorType
 
-*Multi-dimensional array with unknown dimensions*
+*未知维度的多维数组*
 
-Syntax:
+语法：
 
 ```
 tensor-type ::= `tensor` `<` `*` `x` type `>`
 ```
 
-An unranked tensor is a type of tensor in which the set of dimensions have unknown rank. See [RankedTensorType](https://mlir.llvm.org/docs/Dialects/Builtin/#rankedtensortype) for more information on tensor types.
+无秩张量是一种张量类型，其中维度集合的秩未知。有关张量类型的更多信息，请参阅[RankedTensorType](https://mlir.llvm.org/docs/Dialects/Builtin/#rankedtensortype)。
 
-#### Examples: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#examples-1)
+#### 示例：
 
 ```mlir
 tensor<*xf32>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-29)
+#### Parameters:
 
 |  Parameter  | C++ type | Description |
 | :---------: | :------: | ----------- |
 | elementType |  `Type`  |             |
 
-### VectorType [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#vectortype)
+### VectorType
 
-*Multi-dimensional SIMD vector type*
+*多维 SIMD 向量类型*
 
-Syntax:
+语法：
 
 ```
 vector-type ::= `vector` `<` vector-dim-list vector-element-type `>`
@@ -1462,38 +1453,38 @@ static-dim-list ::= static-dim (`x` static-dim)*
 static-dim ::= (decimal-literal | `[` decimal-literal `]`)
 ```
 
-The vector type represents a SIMD style vector used by target-specific operation sets like AVX or SVE. While the most common use is for 1D vectors (e.g. vector<16 x f32>) we also support multidimensional registers on targets that support them (like TPUs). The dimensions of a vector type can be fixed-length, scalable, or a combination of the two. The scalable dimensions in a vector are indicated between square brackets ([ ]).
+向量类型表示 SIMD 类型的向量，由 AVX 或 SVE 等目标特定操作集使用。虽然最常用的是一维向量（如 vector<16 x f32>），但我们也支持在支持它们的目标（如 TPU）上使用多维寄存器。向量类型的维度可以是固定长度的、可缩放的或两者的组合。向量中的可缩放维度在方括号（[ ]）中标出。
 
-Vector shapes must be positive decimal integers. 0D vectors are allowed by omitting the dimension: `vector<f32>`.
+向量形状必须是正十进制整数。通过省略维度，可以使用 0D 向量：`vector<f32>`。
 
-Note: hexadecimal integer literals are not allowed in vector type declarations, `vector<0x42xi32>` is invalid because it is interpreted as a 2D vector with shape `(0, 42)` and zero shapes are not allowed.
+注意：向量类型声明中不允许使用十六进制整数字面量，`vector<0x42xi32>`无效，因为它被解释为形状为`(0, 42)`的二维向量，并且不允许使用零形状。
 
-#### Examples: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#examples-2)
+#### 示例：
 
 ```mlir
-// A 2D fixed-length vector of 3x42 i32 elements.
+// 包含 3x42 个i32元素的二维定长向量。
 vector<3x42xi32>
 
-// A 1D scalable-length vector that contains a multiple of 4 f32 elements.
+// 一个包含 4 个 f32 元素倍数的一维可缩放长度向量。
 vector<[4]xf32>
 
-// A 2D scalable-length vector that contains a multiple of 2x8 f32 elements.
+// 一个二维可缩放长度向量，包含 2x8 个 f32 元素的倍数。
 vector<[2]x[8]xf32>
 
-// A 2D mixed fixed/scalable vector that contains 4 scalable vectors of 4 f32 elements.
+// 一个二维固定/可缩放混合向量，包含 4 个 4 f32 元素的可缩放向量。
+
 vector<4x[4]xf32>
 
-// A 3D mixed fixed/scalable vector in which only the inner dimension is
-// scalable.
+// 一个三维固定/可缩放混合向量，其中只有内维是可缩放的。
 vector<2x[4]x8xf32>
 ```
 
-#### Parameters: [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#parameters-30)
+#### Parameters:
 
-|  Parameter   |          C++ type           | Description                        |
-| :----------: | :-------------------------: | ---------------------------------- |
-|    shape     | `::llvm::ArrayRef<int64_t>` |                                    |
-| elementType  |       `::mlir::Type`        | integer or index or floating-point |
-| scalableDims |  `::llvm::ArrayRef<bool>`   |                                    |
+|  Parameter   |          C++ type           | Description                         |
+| :----------: | :-------------------------: | ----------------------------------- |
+|    shape     | `::llvm::ArrayRef<int64_t>` |                                     |
+| elementType  |       `::mlir::Type`        | VectorElementTypeInterface instance |
+| scalableDims |  `::llvm::ArrayRef<bool>`   |                                     |
 
-## Type Interfaces [¶](https://mlir.llvm.org/docs/Dialects/Builtin/#type-interfaces)
+## 类型接口
