@@ -1,29 +1,29 @@
 # 诊断基础设施
 
-- [源位置](https://mlir.llvm.org/docs/Diagnostics/#source-locations)
-- [诊断引擎](https://mlir.llvm.org/docs/Diagnostics/#diagnostic-engine)
-  - [构造一个诊断](https://mlir.llvm.org/docs/Diagnostics/#constructing-a-diagnostic)
-- [诊断](https://mlir.llvm.org/docs/Diagnostics/#diagnostic)
-  - [添加参数](https://mlir.llvm.org/docs/Diagnostics/#appending-arguments)
-  - [附加注释](https://mlir.llvm.org/docs/Diagnostics/#attaching-notes)
-  - [管理元数据](https://mlir.llvm.org/docs/Diagnostics/#managing-metadata)
-- [InFlight Diagnostic](https://mlir.llvm.org/docs/Diagnostics/#inflight-diagnostic)
-- [诊断配置选项](https://mlir.llvm.org/docs/Diagnostics/#diagnostic-configuration-options)
-  - [诊断时打印操作](https://mlir.llvm.org/docs/Diagnostics/#print-operation-on-diagnostic)
-  - [诊断时打印堆栈追踪](https://mlir.llvm.org/docs/Diagnostics/#print-stacktrace-on-diagnostic)
-- [常见诊断处理程序](https://mlir.llvm.org/docs/Diagnostics/#common-diagnostic-handlers)
-  - [Scoped Diagnostic Handler](https://mlir.llvm.org/docs/Diagnostics/#scoped-diagnostic-handler)
-  - [SourceMgr Diagnostic Handler](https://mlir.llvm.org/docs/Diagnostics/#sourcemgr-diagnostic-handler)
-  - [SourceMgr Diagnostic Verifier Handler](https://mlir.llvm.org/docs/Diagnostics/#sourcemgr-diagnostic-verifier-handler)
-  - [Parallel Diagnostic Handler](https://mlir.llvm.org/docs/Diagnostics/#parallel-diagnostic-handler)
+- [源位置](#源位置)
+- [诊断引擎](#诊断引擎)
+  - [构造一个诊断](#构造一个诊断)
+- [诊断](#诊断)
+  - [添加参数](#添加参数)
+  - [附加注释](#附加注释)
+  - [管理元数据](#管理元数据)
+- [InFlight Diagnostic](#InFlight%20Diagnostic)
+- [诊断配置选项](#诊断配置选项)
+  - [诊断时打印操作](#诊断时打印操作)
+  - [诊断时打印堆栈追踪](#诊断时打印堆栈追踪)
+- [常见诊断处理程序](#常见诊断处理程序)
+  - [Scoped Diagnostic Handler](#Scoped%20Diagnostic%20Handler)
+  - [SourceMgr Diagnostic Handler](#SourceMgr%20Diagnostic%20Handler)
+  - [SourceMgr Diagnostic Verifier Handler](#SourceMgr%20Diagnostic%20Verifier%20Handler)
+  - [Parallel Diagnostic Handler](#Parallel%20Diagnostic%20Handler)
 
 本文档介绍了如何使用 MLIR 的诊断基础设施并与之交互。
 
-有关 MLIR、IR 结构、操作等更多信息，请参阅[MLIR 规范](https://mlir.llvm.org/docs/LangRef/)。
+有关 MLIR、IR 结构、操作等更多信息，请参阅[MLIR 规范](MLIR%20Language%20Reference.md)。
 
 ## 源位置
 
-源位置信息对任何编译器都极为重要，因为它提供了调试和错误报告的基准。[内置方言](https://mlir.llvm.org/docs/Dialects/Builtin/)可根据实际需要提供几种不同的位置属性类型。
+源位置信息对任何编译器都极为重要，因为它提供了调试和错误报告的基准。[内置方言](Dialects/Builtin%20Dialect.md)可根据实际需要提供几种不同的位置属性类型。
 
 ## 诊断引擎
 
@@ -52,13 +52,13 @@ engine.eraseHandler(id);
 
 ### 构造一个诊断 
 
-如上所述，`DiagnosticEngine`拥有用于发出诊断的核心 API。新的诊断可以通过`emit`与引擎一起发出。该方法会返回一个可进一步修改的[InFlightDiagnostic](https://mlir.llvm.org/docs/Diagnostics/#inflight-diagnostic)。
+如上所述，`DiagnosticEngine`拥有用于发出诊断的核心 API。新的诊断可以通过`emit`与引擎一起发出。该方法会返回一个可进一步修改的[InFlightDiagnostic](#InFlight%20Diagnostic)。
 
 ```c++
 InFlightDiagnostic emit(Location loc, DiagnosticSeverity severity);
 ```
 
-但是，使用`DiagnosticEngine`通常不是 MLIR 中发出诊断的首选方法。[`操作`](https://mlir.llvm.org/docs/LangRef/#operations)提供了发出诊断的实用方法：
+但是，使用`DiagnosticEngine`通常不是 MLIR 中发出诊断的首选方法。[`操作`](MLIR%20Language%20Reference.md#操作)提供了发出诊断的实用方法：
 
 ```c++
 // 在 MLIR 命名空间中可用的 `emit` 方法。
@@ -75,7 +75,7 @@ InFlightDiagnostic Operation::emitOpError();
 
 MLIR 中的`Diagnostic`包含向用户报告消息的所有必要信息。`Diagnostic`基本上由四个主要部分组成：
 
-- [源位置](https://mlir.llvm.org/docs/Diagnostics/#source-locations)
+- [源位置](#源位置)
 - 严重性级别
   - Error, Note, Remark, Warning
 - 诊断参数
@@ -138,7 +138,7 @@ op->emitError("...").attachNote() << "...";
 
 ## InFlight Diagnostic
 
-在解释了[Diagnostics](https://mlir.llvm.org/docs/Diagnostics/#diagnostic)之后，我们介绍`InFlightDiagnostic`，它是一个 RAII 包装器，用于封装被设置为已报告的诊断。这允许在诊断仍在运行时对其进行修改。如果用户没有直接报告，那么诊断在销毁时会自动报告。
+在解释了[Diagnostics](#诊断)之后，我们介绍`InFlightDiagnostic`，它是一个 RAII 包装器，用于封装被设置为已报告的诊断。这允许在诊断仍在运行时对其进行修改。如果用户没有直接报告，那么诊断在销毁时会自动报告。
 
 ```c++
 {
@@ -190,7 +190,7 @@ test.mlir:3:3: note: diagnostic emitted with trace:
 
 ## 常见诊断处理程序
 
-要与诊断基础设施交互，用户需要向[`DiagnosticEngine`](https://mlir.llvm.org/docs/Diagnostics/#diagnostic-engine)注册一个诊断处理程序。考虑到许多用户都需要相同的处理程序功能，MLIR 提供了几种通用诊断处理程序，以供直接使用。
+要与诊断基础设施交互，用户需要向[`DiagnosticEngine`](#诊断引擎)注册一个诊断处理程序。考虑到许多用户都需要相同的处理程序功能，MLIR 提供了几种通用诊断处理程序，以供直接使用。
 
 ### Scoped Diagnostic Handler
 
@@ -316,7 +316,7 @@ func.func @foo() -> (index, ind) {
    ^~~~~~~~~~~~~~~~~~~~~~~~~~
 ```
 
-与[SourceMgr Diagnostic Handler](https://mlir.llvm.org/docs/Diagnostics/#sourcemgr-diagnostic-handler)类似，该处理程序可通过以下方式添加到任何工具中：
+与[SourceMgr Diagnostic Handler](#SourceMgr%20Diagnostic%20Handler)类似，该处理程序可通过以下方式添加到任何工具中：
 
 ```c++
 SourceMgr sourceMgr;
