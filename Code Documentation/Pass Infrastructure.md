@@ -1,16 +1,16 @@
 # Pass基础设施
 
-- [操作 Pass](#操作%20Pass)
+- [操作Pass](#操作Pass)
   - [操作无关的操作Passes](#操作无关的操作Pass)
   - [过滤操作Pass](#过滤操作Pass)
-  - [操作 Pass: 静态调度过滤](#操作Pass：静态调度过滤)
+  - [操作Pass：静态调度过滤](#操作Pass：静态调度过滤)
   - [依赖方言](#依赖方言)
   - [初始化](#初始化)
 - [分析管理](#分析管理)
   - [查询分析](#查询分析)
   - [保留分析](#保留分析)
-- [Pass 失败](#Pass%20失败)
-- [Pass 管理器](#Pass%20管理器)
+- [Pass失败](#Pass失败)
+- [Pass管理器](#Pass管理器)
   - [OpPassManager](#OpPassManager)
 - [动态Pass管道](#动态Pass管道)
 - [特定实例Pass选项](#特定实例Pass选项)
@@ -19,8 +19,8 @@
   - [Pass管道注册](#Pass管道注册)
   - [文本Pass管道规范](#文本Pass管道规范)
 - [声明式Pass规范](#声明式Pass规范)
-  - [Tablegen 规范](#Tablegen%20规范)
-- [Pass 插桩工具](#Pass%20插桩工具)
+  - [Tablegen规范](#Tablegen规范)
+- [Pass插桩工具](#Pass插桩工具)
   - [标准插桩工具](#标准插桩工具)
 - [崩溃和故障重现](#崩溃和故障重现)
   - [本地重现器生成](#本地重现器生成)
@@ -31,11 +31,11 @@ Passes是变换和优化的基础架构。本文档概述了 MLIR 中的pass基�
 
 有关 MLIR 中图重写的快速入门，请参阅 [MLIR 重写](Tutorials/Quickstart%20tutorial%20to%20adding%20MLIR%20graph%20rewrite.md)。如果变换涉及模式匹配操作 DAG，这是一个很好的开始。
 
-## 操作 Pass
+## 操作Pass
 
 在 MLIR 中，抽象和变换的主要单位是一个[操作](MLIR%20Language%20Reference.md#操作)。因此，pass管理器被设计用于处理不同嵌套级别的操作实例。在下面的段落中，我们将一个pass作用于的那个操作称为“当前操作”。
 
-[pass 管理器](#Pass%20管理器)的结构以及嵌套的概念将在下面进一步详细介绍。MLIR中的所有passes都派生于`OperationPass` ，并遵守以下限制；任何不遵守限制的行为都会在多线程和其他高级场景中导致问题：
+[pass 管理器](#Pass管理器)的结构以及嵌套的概念将在下面进一步详细介绍。MLIR中的所有passes都派生于`OperationPass` ，并遵守以下限制；任何不遵守限制的行为都会在多线程和其他高级场景中导致问题：
 
 - 不得检查与当前操作同级的那些操作的状态。不得访问嵌套在这些同级操作下的操作。
   - 其他线程可能会并行修改这些操作。
@@ -111,7 +111,7 @@ module @someModule {
 
 如果我们对上述 MLIR 代码段应用操作无关的管道`any(cse,my-function-pass)`，则它只会在 `foo` 函数操作上运行。这是因为 `my-function-pass` 有一个静态过滤约束，即只能对实现`FunctionOpInterface`的操作进行调度。请记住，这个约束是被整个pass管理器继承的，因此我们不会考虑对`someModule`应用任何passes，包括通常可在任何操作上调度的`cse`。
 
-#### 操作 Pass: 按操作类型静态过滤
+#### 操作Pass：按操作类型静态过滤
 
 在上一节中，我们详细介绍了一种通用机制，用于静态过滤一个pass可调度的操作类型。我们在该机制的基础上提供了语法糖，来简化仅限于调度单一操作类型的passes定义。在这些情况下，pass只需向 `OperationPass` 基类提供操作类型。这将自动对该操作类型进行过滤：
 
@@ -127,7 +127,7 @@ struct MyFunctionPass : public PassWrapper<MyOperationPass, OperationPass<func::
 };
 ```
 
-#### 操作 Pass: 按接口静态过滤
+#### 操作Pass：按接口静态过滤
 
 在上一节中，我们详细介绍了用于静态过滤一个pass可调度的操作类型的通用机制。在此机制之上，我们提供了语法糖，来简化仅限于在特定操作接口上调度的passes的定义。在这些情况下，pass只需继承 `InterfacePass` 基类即可。该类与`OperationPass`类似，但需要提供要操作的接口类型。这将自动对该接口类型进行过滤：
 
@@ -145,7 +145,7 @@ struct MyFunctionPass : public PassWrapper<MyOperationPass, InterfacePass<Functi
 
 ### 依赖方言
 
-必须先在 MLIRContext 中加载方言，然后才能创建这些方言中的实体（操作、类型、属性等）。在开始执行多线程pass管道之前，也必须加载这些方言。为此，可能从不能保证已被加载的方言中创建实体的pass必须通过重写  `getDependentDialects()`方法并显式声明此方言列表来表达这一点。另请参阅[TableGen 规范](#Tablegen%20规范)中的 `dependentDialects` 字段。
+必须先在 MLIRContext 中加载方言，然后才能创建这些方言中的实体（操作、类型、属性等）。在开始执行多线程pass管道之前，也必须加载这些方言。为此，可能从不能保证已被加载的方言中创建实体的pass必须通过重写  `getDependentDialects()`方法并显式声明此方言列表来表达这一点。另请参阅[TableGen 规范](#Tablegen规范)中的 `dependentDialects` 字段。
 
 ### 初始化
 
@@ -248,7 +248,7 @@ void MyOperationPass::runOnOperation() {
 }
 ```
 
-## Pass 失败
+## Pass失败
 
 MLIR 中的passes允许优雅地失败。如果pass的某些不变量被破坏，可能导致 IR 处于某种无效状态，就会发生这种情况。如果出现这种情况，pass可以通过 `signalPassFailure` 方法直接向pass管理器发出失败信号。如果pass在执行时发出失败信号，管道中的其他passes将不会执行，并且对 `PassManager::run` 的顶层调用将返回`failure`。
 
@@ -260,7 +260,7 @@ void MyOperationPass::runOnOperation() {
 }
 ```
 
-## Pass 管理器
+## Pass管理器
 
 以上部分介绍了不同类型的passes及其不变量。本节将介绍pass管理器的概念，以及如何使用它来配置和调度pass管道。有两个与pass管理相关的主要类，`PassManager` 和 `OpPassManager`。`PassManager` 类充当顶层入口点，并包含用于整个pass管道的各种配置。`OpPassManager`类用于调度passes在特定嵌套级别运行。顶层 `PassManager` 也可以用作 `OpPassManager`。
 
@@ -361,7 +361,7 @@ void MyModulePass::runOnOperation() {
 
 注意：虽然上述动态管道是在 `runOnOperation` 方法中构建的，但这不是必需的。由于`OpPassManager`类可以安全地拷贝构造，管道应尽可能缓存。
 
-每当pass管道应以嵌套方式运行时，即当嵌套管道无法与主pass管道的其他部分一起静态调度时，应使用本节所述的机制。更具体地说，一个`PassManager`通常不需要在一个`Pass`中构造。使用 `runPipeline` 还能确保所有分析、[插桩](#Pass%20插桩工具)和其他与pass管理器相关的组件都与正在执行的动态管道集成在一起。
+每当pass管道应以嵌套方式运行时，即当嵌套管道无法与主pass管道的其他部分一起静态调度时，应使用本节所述的机制。更具体地说，一个`PassManager`通常不需要在一个`Pass`中构造。使用 `runPipeline` 还能确保所有分析、[插桩](#Pass插桩工具)和其他与pass管理器相关的组件都与正在执行的动态管道集成在一起。
 
 ## 特定实例Pass选项
 
@@ -402,7 +402,7 @@ void registerMyPasses() {
 
 统计是一种跟踪编译器工作以及各种变换效果的方法。查看特定变换对特定输入的影响以及这些变换的触发频率通常很有用。pass统计是针对每个pass实例的，因此可以看到在pass管道中的特定位置进行特定变换的效果。例如，它们有助于回答诸如“如果我在这里再次运行CSE会发生什么情况？”等问题。
 
-可以使用“Pass::Statistic”类将统计添加到pass中。该类的构造函数参数包括：父传递、名称和描述。该类的作用类似于原子无符号整数，可以相应地递增和更新。这些统计数据依赖于与 [`llvm::Statistic`](http://llvm.org/docs/ProgrammersManual.html#the-statistic-class-stats-option) 相同的基础架构，因此具有类似的使用限制。收集的统计数据可以由[pass管理器](#Pass%20管理器)通过 `PassManager::enableStatistics` 以编程方式转储；或通过命令行上的 `-mlir-pass-statistics` 和 `-mlir-pass-statistics-display` 进行。
+可以使用“Pass::Statistic”类将统计添加到pass中。该类的构造函数参数包括：父传递、名称和描述。该类的作用类似于原子无符号整数，可以相应地递增和更新。这些统计数据依赖于与 [`llvm::Statistic`](http://llvm.org/docs/ProgrammersManual.html#the-statistic-class-stats-option) 相同的基础架构，因此具有类似的使用限制。收集的统计数据可以由[pass管理器](#Pass管理器)通过 `PassManager::enableStatistics` 以编程方式转储；或通过命令行上的 `-mlir-pass-statistics` 和 `-mlir-pass-statistics-display` 进行。
 
 下面是一个示例：
 
@@ -495,7 +495,7 @@ void registerMyPass() {
 
 例如，可以使用此注册变体来接受来自命令行参数的pass配置，并将其传递给pass构造函数。
 
-注意：请确保pass是可拷贝构造的，且这种方式不会共享数据，因为[pass管理器](#Pass%20管理器)可能会创建pass的副本来并行执行。
+注意：请确保pass是可拷贝构造的，且这种方式不会共享数据，因为[pass管理器](#Pass管理器)可能会创建pass的副本来并行执行。
 
 ### Pass管道注册
 
@@ -702,7 +702,7 @@ struct MyPass : foo::impl::MyPassBase<MyPass> {
 
 使用 `gen-pass-doc` 生成器，可以为每个pass生成 markdown 文档。请参阅 [Passes.md](Passes.md)，了解实际 MLIR passes的输出示例。
 
-### Tablegen 规范
+### Tablegen规范
 
 `Pass`类用于开始一个新的pass定义。该类接受一个归属于pass的注册表参数，以及一个与pass操作的操作类型对应的可选字符串。该类包含以下字段：
 
@@ -791,7 +791,7 @@ def MyPass : Pass<"my-pass"> {
 }
 ```
 
-## Pass 插桩工具
+## Pass插桩工具
 
 MLIR 通过`PassInstrumentation`类提供了一个可定制的框架，用于对pass的执行和分析计算进行插桩。该类为Pass管理器提供了一些钩子，用来观察各种事件：
 
@@ -817,7 +817,7 @@ MLIR 通过`PassInstrumentation`类提供了一个可定制的框架，用于对
 - `runAfterAnalysis`
   - 该回调函数将在计算分析后立即运行。
 
-PassInstrumentation实例可以通过 `addInstrumentation` 方法直接注册到 [PassManager](#Pass%20管理器) 实例。添加到 PassManager的插桩代码以类似堆栈的方式运行，即最后一个执行 `runBefore*` 钩子的插桩工具将是第一个执行相应 `runAfter*` 钩子的插桩工具。`PassInstrumentation` 类的钩子保证以线程安全的方式执行，因此不需要额外的同步。下面是一个示例插桩代码，该插桩代码计算了 `DominanceInfo` 分析的次数：
+PassInstrumentation实例可以通过 `addInstrumentation` 方法直接注册到 [PassManager](#Pass管理器) 实例。添加到 PassManager的插桩代码以类似堆栈的方式运行，即最后一个执行 `runBefore*` 钩子的插桩工具将是第一个执行相应 `runAfter*` 钩子的插桩工具。`PassInstrumentation` 类的钩子保证以线程安全的方式执行，因此不需要额外的同步。下面是一个示例插桩代码，该插桩代码计算了 `DominanceInfo` 分析的次数：
 
 ```c++
 struct DominanceCounterInstrumentation : public PassInstrumentation {
@@ -1121,7 +1121,7 @@ $ tree /tmp/pipeline_output
 
 ## 崩溃和故障重现
 
-MLIR 中的[pass管理器](#Pass%20管理器)包含一个内置机制，用于在发生崩溃或[pass失败](#Pass%20失败)时生成可重现数据。该功能可以通过 `PassManager::enableCrashReproducerGeneration` 方法或命令行标志 `mlir-pass-pipeline-crash-reproducer` 启用。在这两种情况下，都需要提供一个参数，该参数对应于应将可重现数据写入的输出 `.mlir` 文件名。重现器包含正在执行的pass管理器的配置，以及运行任何passes之前的初始 IR。重现器作为外部资源存储在装配格式中。潜在的重现器可能具有以下形式：
+MLIR 中的[pass管理器](#Pass管理器)包含一个内置机制，用于在发生崩溃或[pass失败](#Pass失败)时生成可重现数据。该功能可以通过 `PassManager::enableCrashReproducerGeneration` 方法或命令行标志 `mlir-pass-pipeline-crash-reproducer` 启用。在这两种情况下，都需要提供一个参数，该参数对应于应将可重现数据写入的输出 `.mlir` 文件名。重现器包含正在执行的pass管理器的配置，以及运行任何passes之前的初始 IR。重现器作为外部资源存储在装配格式中。潜在的重现器可能具有以下形式：
 
 ```mlir
 module {

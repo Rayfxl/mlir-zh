@@ -7,15 +7,15 @@
   - [添加参数](#添加参数)
   - [附加注释](#附加注释)
   - [管理元数据](#管理元数据)
-- [InFlight Diagnostic](#InFlight%20Diagnostic)
+- [InFlightDiagnostic](#InFlightDiagnostic)
 - [诊断配置选项](#诊断配置选项)
   - [诊断时打印操作](#诊断时打印操作)
   - [诊断时打印堆栈追踪](#诊断时打印堆栈追踪)
 - [常见诊断处理程序](#常见诊断处理程序)
-  - [Scoped Diagnostic Handler](#Scoped%20Diagnostic%20Handler)
-  - [SourceMgr Diagnostic Handler](#SourceMgr%20Diagnostic%20Handler)
-  - [SourceMgr Diagnostic Verifier Handler](#SourceMgr%20Diagnostic%20Verifier%20Handler)
-  - [Parallel Diagnostic Handler](#Parallel%20Diagnostic%20Handler)
+  - [ScopedDiagnosticHandler](#ScopedDiagnosticHandler)
+  - [SourceMgrDiagnosticHandler](#SourceMgrDiagnosticHandler)
+  - [SourceMgrDiagnosticVerifier Handler](#SourceMgrDiagnosticVerifierHandler)
+  - [ParallelDiagnosticHandler](#ParallelDiagnosticHandler)
 
 本文档介绍了如何使用 MLIR 的诊断基础设施并与之交互。
 
@@ -136,7 +136,7 @@ op->emitError("...").attachNote() << "...";
 
 元数据是 DiagnosticArguments 的可变向量。它可以作为向量被访问和修改。
 
-## InFlight Diagnostic
+## InFlightDiagnostic
 
 在解释了[Diagnostics](#诊断)之后，我们介绍`InFlightDiagnostic`，它是一个 RAII 包装器，用于封装被设置为已报告的诊断。这允许在诊断仍在运行时对其进行修改。如果用户没有直接报告，那么诊断在销毁时会自动报告。
 
@@ -192,7 +192,7 @@ test.mlir:3:3: note: diagnostic emitted with trace:
 
 要与诊断基础设施交互，用户需要向[`DiagnosticEngine`](#诊断引擎)注册一个诊断处理程序。考虑到许多用户都需要相同的处理程序功能，MLIR 提供了几种通用诊断处理程序，以供直接使用。
 
-### Scoped Diagnostic Handler
+### ScopedDiagnosticHandler
 
 该诊断处理程序是一个简单的 RAII 类，用于注册和注销给定的诊断处理程序。该类既可直接使用，也可与派生诊断处理程序结合使用。
 
@@ -215,7 +215,7 @@ class MyDerivedHandler : public ScopedDiagnosticHandler {
 };
 ```
 
-### SourceMgr Diagnostic Handler
+### SourceMgrDiagnosticHandler
 
 该诊断处理程序是 llvm::SourceMgr 实例的包装器。它支持在相应源文件的一行内显示诊断信息。当尝试显示诊断信息的源文件行时，该处理程序还会自动将新遇到的源文件加载到 SourceMgr 中。在`mlir-opt`工具中可以看到该处理程序的使用示例。
 
@@ -263,7 +263,7 @@ SourceMgrDiagnosticHandler sourceMgrHandler(sourceMgr, &context, shouldShowFn);
 
 注意：在所有位置都被过滤掉的情况下，仍将显示堆栈中的第一个位置。
 
-### SourceMgr Diagnostic Verifier Handler
+### SourceMgrDiagnosticVerifierHandler
 
 该处理程序是 llvm::SourceMgr 的包装器，用于验证是否已向上下文发出某些诊断。要使用此处理程序，请在源文件中注释预期诊断，其形式为：
 
@@ -324,7 +324,7 @@ MLIRContext context;
 SourceMgrDiagnosticVerifierHandler sourceMgrHandler(sourceMgr, &context);
 ```
 
-### Parallel Diagnostic Handler
+### ParallelDiagnosticHandler
 
 MLIR 从设计之初就是多线程的。多线程时需要注意的一个重要问题是确定性。这意味着在多线程上运行时的行为与在单线程上运行时的行为相同。对于诊断程序来说，这意味着无论有多少线程在运行，诊断的顺序都是一样的。引入 ParallelDiagnosticHandler 就是为了解决这个问题。
 
