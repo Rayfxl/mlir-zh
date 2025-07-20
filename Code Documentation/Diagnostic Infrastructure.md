@@ -52,7 +52,7 @@ engine.eraseHandler(id);
 
 ### 构造一个诊断 
 
-如上所述，`DiagnosticEngine`拥有用于发出诊断的核心 API。新的诊断可以通过`emit`与引擎一起发出。该方法会返回一个可进一步修改的[InFlightDiagnostic](#InFlight%20Diagnostic)。
+如上所述，`DiagnosticEngine`拥有用于发出诊断的核心 API。新的诊断可以通过`emit`与引擎一起发出。该方法会返回一个可进一步修改的[InFlightDiagnostic](#InFlightDiagnostic)。
 
 ```c++
 InFlightDiagnostic emit(Location loc, DiagnosticSeverity severity);
@@ -316,7 +316,7 @@ func.func @foo() -> (index, ind) {
    ^~~~~~~~~~~~~~~~~~~~~~~~~~
 ```
 
-与[SourceMgr Diagnostic Handler](#SourceMgr%20Diagnostic%20Handler)类似，该处理程序可通过以下方式添加到任何工具中：
+与[SourceMgr Diagnostic Handler](#SourceMgrDiagnosticHandler)类似，该处理程序可通过以下方式添加到任何工具中：
 
 ```c++
 SourceMgr sourceMgr;
