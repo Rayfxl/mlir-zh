@@ -85,7 +85,7 @@ affine_map<(d0) -> (d0)>
 affine_map<(d0, d1, d2) -> (d0, d1)>
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |  C++ type   | Description |
 | :-------: | :---------: | ----------- |
@@ -111,7 +111,7 @@ array-attribute ::= `[` (attribute-value (`,` attribute-value)*)? `]`
 [affine_map<(d0, d1, d2) -> (d0, d1)>, i32, "string attribute"]
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |           C++ type            | Description |
 | :-------: | :---------------------------: | ----------- |
@@ -146,7 +146,7 @@ array<f64: 42., 12.>
 [1, 2, 3]
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter  |         C++ type         | Description                                     |
 | :---------: | :----------------------: | ----------------------------------------------- |
@@ -177,7 +177,7 @@ dense<10> : tensor<2xi32>
 dense<[10.0, 11.0]> : tensor<2xf32>
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |     C++ type     | Description |
 | :-------: | :--------------: | ----------- |
@@ -211,7 +211,7 @@ dialect_resources: {
 #-}
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |           C++ type            | Description |
 | :-------: | :---------------------------: | ----------- |
@@ -240,7 +240,7 @@ dense<"example"> : tensor<2x!foo.string>
 dense<["example1", "example2"]> : tensor<2x!foo.string>
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |       C++ type        | Description |
 | :-------: | :-------------------: | ----------- |
@@ -267,7 +267,7 @@ dictionary-attribute ::= `{` (attribute-entry (`,` attribute-entry)*)? `}`
 {int_attr = 10, "string attr name" = "string attribute"}
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |              C++ type              | Description |
 | :-------: | :--------------------------------: | ----------- |
@@ -296,7 +296,7 @@ float-attribute ::= (float-literal (`:` float-type)?)
 42 : f32     // Error: expected integer type
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |     C++ type      | Description |
 | :-------: | :---------------: | ----------- |
@@ -325,7 +325,7 @@ true  // A bool, i.e. i1, value.
 false // A bool, i.e. i1, value.
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |    C++ type     | Description |
 | :-------: | :-------------: | ----------- |
@@ -348,7 +348,7 @@ integer-set-attribute ::= `affine_set` `<` integer-set `>`
 affine_set<(d0) : (d0 - 2 >= 0)>
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |   C++ type   | Description |
 | :-------: | :----------: | ----------- |
@@ -372,7 +372,7 @@ opaque-attribute ::= dialect-namespace `<` attr-data `>`
 #dialect<"opaque attribute data">
 ```
 
-#### Parameters:
+#### 参数：
 
 |    Parameter     |      C++ type       | Description |
 | :--------------: | :-----------------: | ----------- |
@@ -407,7 +407,7 @@ sparse<[[0, 0], [1, 2]], [1, 5]> : tensor<3x4xi32>
 ///   [0, 0, 0, 0]]
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |        C++ type        | Description |
 | :-------: | :--------------------: | ----------- |
@@ -434,7 +434,7 @@ string-attribute ::= string-literal (`:` type)?
 "string with a type" : !dialect.string
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |      C++ type       | Description |
 | :-------: | :-----------------: | ----------- |
@@ -464,7 +464,7 @@ symbol-ref-attribute ::= symbol-ref-id (`::` symbol-ref-id)*
 @parent_reference::@nested_reference
 ```
 
-#### Parameters:
+#### 参数：
 
 |    Parameter     |               C++ type                | Description |
 | :--------------: | :-----------------------------------: | ----------- |
@@ -490,7 +490,7 @@ i32
 !dialect.type
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter | C++ type | Description |
 | :-------: | :------: | ----------- |
@@ -541,7 +541,7 @@ strided 布局属性以规范形式捕获 memref 类型的布局信息。具体�
 
 更多信息请参阅[Dialects/Builtin.md#memreftype](MemRef type)。
 
-#### Parameters:
+#### 参数：
 
 | Parameter |          C++ type           | Description                       |
 | :-------: | :-------------------------: | --------------------------------- |
@@ -570,7 +570,7 @@ callsite-location ::= `callsite` `(` location `at` location `)`
 loc(callsite("foo" at "mysource.cc":10:8))
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |  C++ type  | Description |
 | :-------: | :--------: | ----------- |
@@ -602,7 +602,7 @@ filelinecol-location ::= string-literal `:` integer-literal `:`
 loc("mysource.cc":10:8 to 12:18)
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter   |   C++ type   | Description |
 | :----------: | :----------: | ----------- |
@@ -632,7 +632,7 @@ loc(fused["mysource.cc":10:8, "mysource.cc":22:8])
 loc(fused<"CSE">["mysource.cc":10:8, "mysource.cc":22:8])
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |           C++ type           | Description |
 | :-------: | :--------------------------: | ----------- |
@@ -657,7 +657,7 @@ name-location ::= string-literal (`(` location `)`)?
 loc("CSE"("mysource.cc":10:8))
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |   C++ type   | Description |
 | :-------: | :----------: | ----------- |
@@ -677,7 +677,7 @@ loc("CSE"("mysource.cc":10:8))
 %1 = arith.constant 4 : index loc(callsite("mysum" at "mysource.cc":10:8))
 ```
 
-#### Parameters:
+#### 参数：
 
 |     Parameter      |  C++ type   | Description |
 | :----------------: | :---------: | ----------- |
@@ -752,7 +752,7 @@ module {
 
 接口：`OpAsmOpInterface`, `RegionKindInterface`, `Symbol`
 
-#### Attributes:
+#### 属性：
 
 | Attribute        | MLIR Type          | Description      |
 | ---------------- | ------------------ | ---------------- |
@@ -797,13 +797,13 @@ Example:
 
 副作用：`MemoryEffects::Effect{}`
 
-#### Operands:
+#### 操作数：
 
 | Operand  | Description          |
 | :------: | -------------------- |
 | `inputs` | variadic of any type |
 
-#### Results:
+#### 结果：
 
 |  Result   | Description          |
 | :-------: | -------------------- |
@@ -834,7 +834,7 @@ complex<f32>
 complex<i32>
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter  | C++ type | Description |
 | :---------: | :------: | ----------- |
@@ -1038,7 +1038,7 @@ func.func @add_one(%arg0 : i64) -> i64 {
 }
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |     C++ type     | Description |
 | :-------: | :--------------: | ----------- |
@@ -1080,7 +1080,7 @@ integer-type ::= signed-integer-type |
 
 **基本原理：** 低精度整数（如`i2`、`i4`等）适用于低精度推理芯片，任意精度整数适用于硬件综合（13 位乘法器比 16 位乘法器便宜/小得多）。
 
-#### Parameters:
+#### 参数：
 
 | Parameter  |       C++ type        | Description |
 | :--------: | :-------------------: | ----------- |
@@ -1241,7 +1241,7 @@ memref<16x32xf32, #identity>
 %A = alloc (%n)[%o] : <16x?xf32, #imapS>
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter  |          C++ type           | Description |
 | :---------: | :-------------------------: | ----------- |
@@ -1290,7 +1290,7 @@ opaque<"llvm", "struct<(i32, float)>">
 opaque<"pdl", "value">
 ```
 
-#### Parameters:
+#### 参数：
 
 |    Parameter     |      C++ type       | Description |
 | :--------------: | :-----------------: | ----------- |
@@ -1343,7 +1343,7 @@ tensor<0xf32>
 tensor<?x?xf64, #ENCODING>
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter  |          C++ type           | Description |
 | :---------: | :-------------------------: | ----------- |
@@ -1378,7 +1378,7 @@ tuple<f32>
 tuple<i32, f32, tensor<i1>, i5>
 ```
 
-#### Parameters:
+#### 参数：
 
 | Parameter |     C++ type     | Description |
 | :-------: | :--------------: | ----------- |
@@ -1408,7 +1408,7 @@ memref<*f32>
 memref<*f32, 10>
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter  |  C++ type   | Description |
 | :---------: | :---------: | ----------- |
@@ -1433,7 +1433,7 @@ tensor-type ::= `tensor` `<` `*` `x` type `>`
 tensor<*xf32>
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter  | C++ type | Description |
 | :---------: | :------: | ----------- |
@@ -1479,7 +1479,7 @@ vector<4x[4]xf32>
 vector<2x[4]x8xf32>
 ```
 
-#### Parameters:
+#### 参数：
 
 |  Parameter   |          C++ type           | Description                         |
 | :----------: | :-------------------------: | ----------------------------------- |
