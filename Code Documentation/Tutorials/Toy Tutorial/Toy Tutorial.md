@@ -1,3 +1,5 @@
+# Toy教程
+
 本教程在 MLIR 的基础上实现了一种基本的Toy语言。本教程的目标是介绍 MLIR 的概念，尤其是[方言](https://mlir.llvm.org/docs/LangRef/#dialects)如何帮助轻松支持特定语言的构造和变换，同时还提供了一条轻松降级到 LLVM 或其他 codegen 基础设施的途径。本教程基于[LLVM Kaleidoscope Tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html)的模式。
 
 另一个很好的介绍来源是 2020 年 LLVM Dev 大会的在线[录制](https://www.youtube.com/watch?v=Y4SvqTtOIDk)（[幻灯片](https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf)）。
